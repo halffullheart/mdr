@@ -2,12 +2,16 @@
 #import <WebKit/WebKit.h>
 #import "Reader.h"
 
+@interface MDRApplicationDelegate : NSObject
+@end
+
 int main ()
 {
     [NSAutoreleasePool new];
     [NSApplication sharedApplication];
     id appName = [[NSProcessInfo processInfo] processName];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+    [NSApp setDelegate:[MDRApplicationDelegate alloc]];
 
     char* body = getHTML();
     NSString* html = [NSString stringWithCString:body encoding:NSASCIIStringEncoding];
@@ -16,7 +20,7 @@ int main ()
     NSRect rect = NSMakeRect(0, 0, 640, 480);
 
     id window = [[[NSWindow alloc] initWithContentRect:rect
-        styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO]
+        styleMask:(NSTitledWindowMask | NSClosableWindowMask) backing:NSBackingStoreBuffered defer:NO]
             autorelease];
     [window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
     [window setTitle:appName];
@@ -32,3 +36,10 @@ int main ()
 
     return 0;
 }
+
+@implementation MDRApplicationDelegate
+- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) sender
+{
+    return YES;
+}
+@end
