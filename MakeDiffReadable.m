@@ -5,8 +5,14 @@
 @interface MDRApplicationDelegate : NSObject
 @end
 
-int main ()
+int main (int argc, const char * argv[])
 {
+
+    if (argc > 1 && strcmp(argv[1], "--html") == 0)
+    {
+        printf("HTML Output:\n%s\n", getHTML());
+        return 0;
+    }
 
     pid_t pid = fork();
     if (pid == 0)
