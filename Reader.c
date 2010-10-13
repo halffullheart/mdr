@@ -10,7 +10,9 @@ enum lineType {
     CHANGE,
     EMPTY,
     HEADER,
-    INFO
+    INFO,
+    OLD_FILE,
+    NEW_FILE
 };
 
 typedef struct {
@@ -23,8 +25,9 @@ char * getHTMLHead();
 
 char * getHTML()
 {
-    bstring html = bfromcstr("<!DOCTYPE html>");
+    bstring html = bfromcstr("<!DOCTYPE html>\n<html>\n");
     bcatcstr(html, getHTMLHead());
+    bcatcstr(html, "<body>\n<table>\n");
 
     // Read from stdin
     bstring stdinContents = bread ((bNread) fread, stdin);
@@ -47,9 +50,10 @@ char * getHTML()
         int lineMapPosL = 0;
         int lineMapPosR = 0;
 
-        char oldFileId[3] = "---";
-        char newFileId[3] = "+++";
-        char infoId[3] = "@@ ";
+        char oldFileId[3]  = "---";
+        char newFileId[3]  = "+++";
+        char lineInfoId[3] = "@@ ";
+        char headerId[3]   = "dif";
 
         int useL = 0;
         int useR = 0;
@@ -67,13 +71,21 @@ char * getHTML()
 
             if (bisstemeqblk(inputLines->entry[i], oldFileId, 3) == 1)
             {
-                typeL = HEADER;
+                typeL = OLD_FILE;
                 useL = 1;
             }
             else if (bisstemeqblk(inputLines->entry[i], newFileId, 3) == 1)
             {
-                typeR = HEADER;
+                typeR = NEW_FILE;
                 useR = 1;
+            }
+            else if (bisstemeqblk(inputLines->entry[i], lineInfoId, 3) == 1)
+            {
+                typeR = INFO;
+            }
+            else if (bisstemeqblk(inputLines->entry[i], headerId, 3) == 1)
+            {
+                typeR = HEADER;
             }
             else if (bdata(inputLines->entry[i])[0] == '-')
             {
@@ -93,22 +105,12 @@ char * getHTML()
                 useR = 1;
             }
 
-            if (useL)
-            {
-                lineMapL[lineMapPosL].inputPos = i;
-                lineMapL[lineMapPosL].type = typeL;
-                lineMapPosL++;
-            }
-
-            if (useR)
-            {
-                lineMapR[lineMapPosR].inputPos = i;
-                lineMapR[lineMapPosR].type = typeR;
-                lineMapPosR++;
-            }
-
             // Balance
-            if (typeL == HEADER || typeR == HEADER || i == inputLines->qty - 1)
+            if (typeL == HEADER ||
+                typeR == HEADER ||
+                (typeR == SAME && useR) ||
+                (typeL == SAME && useL) ||
+                i == inputLines->qty - 1)
             {
                 int difference = lineMapPosL - lineMapPosR;
                 if (difference > 0)
@@ -133,8 +135,24 @@ char * getHTML()
                 }
             }
 
+            if (useL)
+            {
+                lineMapL[lineMapPosL].inputPos = i;
+                lineMapL[lineMapPosL].type = typeL;
+                lineMapPosL++;
+            }
+
+            if (useR)
+            {
+                lineMapR[lineMapPosR].inputPos = i;
+                lineMapR[lineMapPosR].type = typeR;
+                lineMapPosR++;
+            }
+
         }
 
+        // Mapping complete. Quick sanity check that both L and R cols have the
+        // same length.
         if (lineMapPosL != lineMapPosR)
         {
             char * error = malloc(100 * sizeof(char));
@@ -142,11 +160,35 @@ char * getHTML()
             return error;
         }
 
+        // Now we do the formatting work based on the map.
         for (i = 0; i < lineMapPosL; i++)
         {
-            bconcat(html, inputLines->entry[lineMapL[i].inputPos]);
-            bconchar(html, '\n');
+            bcatcstr(html, "<tr>\n<td>\n");
+
+            if (lineMapL[i].type == EMPTY)
+            {
+                bcatcstr(html, "EMPTY");
+            }
+            else
+            {
+                bconcat(html, inputLines->entry[lineMapL[i].inputPos]); // TODO: strip off first x chars from diff format
+            }
+
+            bcatcstr(html, "\n</td>\n<td>\n");
+
+            if (lineMapR[i].type == EMPTY)
+            {
+                bcatcstr(html, "EMPTY");
+            }
+            else
+            {
+                bconcat(html, inputLines->entry[lineMapR[i].inputPos]); // TODO: strip off first x chars from diff format
+            }
+
+            bcatcstr(html, "\n</td>\n</tr>\n");
         }
+
+        bcatcstr(html, "</table>\n</body>\n</html>\n");
 
         free(lineMapL);
         free(lineMapR);
@@ -172,6 +214,7 @@ char * getHTMLHead()
         "    body {\n"
         "      margin: 0;\n"
         "      padding: 0;\n"
+        "      font-family: monospace;\n"
         "    }\n"
         "  </style>\n"
         "</head>\n";
