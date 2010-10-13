@@ -19,13 +19,22 @@ typedef struct {
     enum lineType type;
     int inputPos;
     int padding;
+    int lineNo;
 } lineData;
+
 
 char * getHTMLHead();
 
-void formatLine(bstring base, bstring content, char * type, int padding);
+void createLine(bstring base, bstring content, lineData lineMap);
+
+void createEmptyLine(bstring base);
 
 char * typeString(enum lineType type);
+
+char * lineNumberString(int lineNo);
+
+void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
+
 
 char * getHTML()
 {
@@ -63,6 +72,8 @@ char * getHTML()
         int useR;
         enum lineType type;
         int padding;
+        int lineNoL = 0;
+        int lineNoR = 0;
 
         // Map input lines to their output column (left, right, or both)
         int i;
@@ -78,36 +89,47 @@ char * getHTML()
                 type = OLD_FILE;
                 useL = 1;
                 padding = 4;
+                lineNoL = 0;
+                lineNoR = 0;
             }
             else if (bisstemeqblk(inputLines->entry[i], newFileId, 3) == 1)
             {
                 type = NEW_FILE;
                 useR = 1;
                 padding = 4;
+                lineNoL = 0;
+                lineNoR = 0;
             }
             else if (bisstemeqblk(inputLines->entry[i], lineInfoId, 3) == 1)
             {
                 type = INFO;
+                syncLineNumbers(inputLines->entry[i], &lineNoL, &lineNoR);
             }
             else if (bisstemeqblk(inputLines->entry[i], headerId, 3) == 1)
             {
                 type = HEADER;
+                lineNoL = 0;
+                lineNoR = 0;
             }
             else if (bdata(inputLines->entry[i])[0] == '-')
             {
                 type = OLD;
                 useL = 1;
+                lineNoL++;
             }
             else if (bdata(inputLines->entry[i])[0] == '+')
             {
                 type = NEW;
                 useR = 1;
+                lineNoR++;
             }
             else if (bdata(inputLines->entry[i])[0] == ' ')
             {
                 type = SAME;
                 useL = 1;
                 useR = 1;
+                lineNoL++;
+                lineNoR++;
             }
 
             // Balance
@@ -121,9 +143,7 @@ char * getHTML()
                     int j;
                     for (j = 0; j < difference; j++)
                     {
-                        lineMapR[lineMapPosR].inputPos = -1;
                         lineMapR[lineMapPosR].type = EMPTY;
-                        lineMapR[lineMapPosR].padding = 0;
                         lineMapPosR++;
                     }
                 }
@@ -132,9 +152,7 @@ char * getHTML()
                     int j;
                     for (j = 0; j < (difference * -1); j++)
                     {
-                        lineMapL[lineMapPosL].inputPos = -1;
                         lineMapL[lineMapPosL].type = EMPTY;
-                        lineMapL[lineMapPosL].padding = 0;
                         lineMapPosL++;
                     }
                 }
@@ -145,6 +163,7 @@ char * getHTML()
                 lineMapL[lineMapPosL].inputPos = i;
                 lineMapL[lineMapPosL].type = type;
                 lineMapL[lineMapPosL].padding = padding;
+                lineMapL[lineMapPosL].lineNo = lineNoL - 1;
                 lineMapPosL++;
             }
 
@@ -153,6 +172,7 @@ char * getHTML()
                 lineMapR[lineMapPosR].inputPos = i;
                 lineMapR[lineMapPosR].type = type;
                 lineMapR[lineMapPosR].padding = padding;
+                lineMapR[lineMapPosR].lineNo = lineNoR - 1;
                 lineMapPosR++;
             }
 
@@ -164,7 +184,7 @@ char * getHTML()
         {
             char * error = malloc(100 * sizeof(char));
             snprintf(error, 100, "Columns not equal in length. L:%i R:%i\n", lineMapPosL, lineMapPosR);
-            return error;
+            return error; // Caller should free()
         }
 
         // Now we do the formatting work based on the map.
@@ -173,29 +193,27 @@ char * getHTML()
             bstring inputLineL = inputLines->entry[lineMapL[i].inputPos];
             bstring inputLineR = inputLines->entry[lineMapR[i].inputPos];
 
-            bcatcstr(html, "<tr>\n<td>\n");
+            bcatcstr(html, "<tr>\n");
 
             if (lineMapL[i].type == EMPTY)
             {
-                bcatcstr(html, "<div class='line empty'>&nbsp;</div>");
+                createEmptyLine(html);
             }
             else
             {
-                formatLine(html, inputLineL, typeString(lineMapL[i].type), lineMapL[i].padding);
+                createLine(html, inputLineL, lineMapL[i]);
             }
-
-            bcatcstr(html, "\n</td>\n<td>\n");
 
             if (lineMapR[i].type == EMPTY)
             {
-                bcatcstr(html, "<div class='line empty'>&nbsp;</div>");
+                createEmptyLine(html);
             }
             else
             {
-                formatLine(html, inputLineR, typeString(lineMapR[i].type), lineMapR[i].padding);
+                createLine(html, inputLineR, lineMapR[i]);
             }
 
-            bcatcstr(html, "\n</td>\n</tr>\n");
+            bcatcstr(html, "</tr>\n");
         }
 
         bcatcstr(html, "</table>\n</body>\n</html>\n");
@@ -205,14 +223,12 @@ char * getHTML()
     }
 
     bstrListDestroy(inputLines);
-
-    //bconcat(html, stdinContents);
     bdestroy(stdinContents);
 
     char * result = bstr2cstr(html, '-');
     bdestroy(html);
 
-    return result;
+    return result; // Caller should free()
 }
 
 char * getHTMLHead()
@@ -226,6 +242,12 @@ char * getHTMLHead()
         "      padding: 0;\n"
         "      font-family: monospace;\n"
         "    }\n"
+        "    table {\n"
+        "      border-collapse: collapse;\n"
+        "    }\n"
+        "    td {\n"
+        "      vertical-align: top;\n"
+        "    }\n"
         "    .line.new {\n"
         "      background: #aaffaa;\n"
         "    }\n"
@@ -235,56 +257,73 @@ char * getHTMLHead()
         "    .line.empty {\n"
         "      background: #dddddd;\n"
         "    }\n"
-        "    table {\n"
-        "      border-collapse: collapse;\n"
-        "    }\n"
-        "    td {\n"
-        "      vertical-align: top;\n"
+        "    .line_number {\n"
+        "      padding: 0 8px;"
+        "      background: #cccccc;\n"
         "    }\n"
         "  </style>\n"
         "</head>\n";
 }
 
-void formatLine(bstring base, bstring content, char * type, int padding)
+void createLine(bstring base, bstring content, lineData lineMap)
 {
+
     // TODO: there's a lot of string manipulation going on here. It might be
     // good for performance to call ballocmin and boost the base string size by
     // a big chunk.
-    bcatcstr(base, "<div class='line ");
-    bcatcstr(base, type);
+    char * lineNo = lineNumberString(lineMap.lineNo);
+    bcatcstr(base, "<td class='line_number'>");
+    bcatcstr(base, lineNo);
+    bcatcstr(base, "</td>\n");
+    bcatcstr(base, "<td class='line ");
+    bcatcstr(base, typeString(lineMap.type));
     bcatcstr(base, "'>");
-    content = bmidstr(content, padding, content->slen);
+    content = bmidstr(content, lineMap.padding, content->slen);
     if (content->slen == 0) content = bfromcstr("&nbsp;");
     bfindreplace(content, bfromcstr(" "), bfromcstr("&nbsp;"), 0);
     bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), 0);
     bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), 0);
     bconcat(base, content);
-    bcatcstr(base, "</div>");
+    bcatcstr(base, "</td>\n");
+
+    free(lineNo);
+}
+
+void createEmptyLine(bstring base)
+{
+    bcatcstr(base, "<td class='line_number'>&nbsp;</td><td class='line empty'>&nbsp;</td>\n");
 }
 
 char * typeString(enum lineType type)
 {
     switch (type)
     {
-        case SAME:
-            return "same";
-        case OLD:
-            return "old";
-        case NEW:
-            return "new";
-        case CHANGE:
-            return "change";
-        case EMPTY:
-            return "empty";
-        case HEADER:
-            return "header";
-        case INFO:
-            return "info";
-        case OLD_FILE:
-            return "old_file";
-        case NEW_FILE:
-            return "new_file";
+        case SAME:     return "same";
+        case OLD:      return "old";
+        case NEW:      return "new";
+        case CHANGE:   return "change";
+        case EMPTY:    return "empty";
+        case HEADER:   return "header";
+        case INFO:     return "info";
+        case OLD_FILE: return "old_file";
+        case NEW_FILE: return "new_file";
     }
 
     return "";
+}
+
+char * lineNumberString(int lineNo)
+{
+    char * s = malloc(100 * sizeof(char));
+    if (lineNo <= 0) {
+        strcpy(s, "&nbsp;");
+    } else {
+        snprintf(s, 100, "%i", lineNo);
+    }
+    return s;
+}
+
+void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
+{
+    sscanf(bstr2cstr(infoString, ' '), "@@ -%d,%*d +%d,%*d", lineNoL, lineNoR);
 }

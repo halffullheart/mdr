@@ -8,9 +8,12 @@
 int main (int argc, const char * argv[])
 {
 
+    char * html = getHTML();
+
     if (argc > 1 && strcmp(argv[1], "--html") == 0)
     {
-        printf("HTML Output:\n%s\n", getHTML());
+        printf("HTML Output:\n%s\n", html);
+        free(html);
         return 0;
     }
 
@@ -26,9 +29,8 @@ int main (int argc, const char * argv[])
         [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
         [NSApp setDelegate:[MDRApplicationDelegate alloc]];
 
-        char* body = getHTML();
-        NSString* html = [NSString stringWithCString:body encoding:NSASCIIStringEncoding];
-        free(body);
+        NSString* webContent = [NSString stringWithCString:html encoding:NSASCIIStringEncoding];
+        free(html);
 
         NSRect rect = NSMakeRect(0, 0, 1000, 500);
 
@@ -44,7 +46,7 @@ int main (int argc, const char * argv[])
 
         id webView = [[[WebView alloc] initWithFrame:rect] autorelease];
         [window setContentView:webView];
-        [[webView mainFrame] loadHTMLString:html baseURL: nil];
+        [[webView mainFrame] loadHTMLString:webContent baseURL: nil];
 
         [NSApp activateIgnoringOtherApps:YES];
         [NSApp run];
