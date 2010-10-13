@@ -190,8 +190,16 @@ char * getHTML()
         // Now we do the formatting work based on the map.
         for (i = 0; i < lineMapPosL; i++)
         {
-            bstring inputLineL = inputLines->entry[lineMapL[i].inputPos];
-            bstring inputLineR = inputLines->entry[lineMapR[i].inputPos];
+            bstring inputLineL;
+            bstring inputLineR;
+
+            if (lineMapL[i].type != EMPTY) {
+                inputLineL = inputLines->entry[lineMapL[i].inputPos];
+            }
+
+            if (lineMapR[i].type != EMPTY) {
+                inputLineR = inputLines->entry[lineMapR[i].inputPos];
+            }
 
             bcatcstr(html, "<tr>\n");
 
@@ -222,8 +230,8 @@ char * getHTML()
         free(lineMapR);
     }
 
-    bstrListDestroy(inputLines);
     bdestroy(stdinContents);
+    bstrListDestroy(inputLines);
 
     char * result = bstr2cstr(html, '-');
     bdestroy(html);
