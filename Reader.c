@@ -23,11 +23,15 @@ typedef struct {
 
 char * getHTMLHead();
 
+void formatLine(bstring base, bstring content, char * type, int padding);
+
+char * typeString(enum lineType type);
+
 char * getHTML()
 {
     bstring html = bfromcstr("<!DOCTYPE html>\n<html>\n");
     bcatcstr(html, getHTMLHead());
-    bcatcstr(html, "<body>\n<table>\n");
+    bcatcstr(html, "<body>\n<table cellpadding='0'>\n");
 
     // Read from stdin
     bstring stdinContents = bread ((bNread) fread, stdin);
@@ -55,10 +59,10 @@ char * getHTML()
         char lineInfoId[3] = "@@ ";
         char headerId[3]   = "dif";
 
-        int useL = 0;
-        int useR = 0;
-        enum lineType typeL = SAME;
-        enum lineType typeR = SAME;
+        int useL;
+        int useR;
+        enum lineType type;
+        int padding;
 
         // Map input lines to their output column (left, right, or both)
         int i;
@@ -66,50 +70,49 @@ char * getHTML()
 
             useL = 0;
             useR = 0;
-            typeL = SAME;
-            typeR = SAME;
+            type = SAME;
+            padding = 1;
 
             if (bisstemeqblk(inputLines->entry[i], oldFileId, 3) == 1)
             {
-                typeL = OLD_FILE;
+                type = OLD_FILE;
                 useL = 1;
+                padding = 4;
             }
             else if (bisstemeqblk(inputLines->entry[i], newFileId, 3) == 1)
             {
-                typeR = NEW_FILE;
+                type = NEW_FILE;
                 useR = 1;
+                padding = 4;
             }
             else if (bisstemeqblk(inputLines->entry[i], lineInfoId, 3) == 1)
             {
-                typeR = INFO;
+                type = INFO;
             }
             else if (bisstemeqblk(inputLines->entry[i], headerId, 3) == 1)
             {
-                typeR = HEADER;
+                type = HEADER;
             }
             else if (bdata(inputLines->entry[i])[0] == '-')
             {
-                typeL = OLD;
+                type = OLD;
                 useL = 1;
             }
             else if (bdata(inputLines->entry[i])[0] == '+')
             {
-                typeR = NEW;
+                type = NEW;
                 useR = 1;
             }
             else if (bdata(inputLines->entry[i])[0] == ' ')
             {
-                typeL = SAME;
-                typeR = SAME;
+                type = SAME;
                 useL = 1;
                 useR = 1;
             }
 
             // Balance
-            if (typeL == HEADER ||
-                typeR == HEADER ||
-                (typeR == SAME && useR) ||
-                (typeL == SAME && useL) ||
+            if (type == HEADER ||
+                (type == SAME && (useL || useR)) ||
                 i == inputLines->qty - 1)
             {
                 int difference = lineMapPosL - lineMapPosR;
@@ -120,6 +123,7 @@ char * getHTML()
                     {
                         lineMapR[lineMapPosR].inputPos = -1;
                         lineMapR[lineMapPosR].type = EMPTY;
+                        lineMapR[lineMapPosR].padding = 0;
                         lineMapPosR++;
                     }
                 }
@@ -130,6 +134,7 @@ char * getHTML()
                     {
                         lineMapL[lineMapPosL].inputPos = -1;
                         lineMapL[lineMapPosL].type = EMPTY;
+                        lineMapL[lineMapPosL].padding = 0;
                         lineMapPosL++;
                     }
                 }
@@ -138,14 +143,16 @@ char * getHTML()
             if (useL)
             {
                 lineMapL[lineMapPosL].inputPos = i;
-                lineMapL[lineMapPosL].type = typeL;
+                lineMapL[lineMapPosL].type = type;
+                lineMapL[lineMapPosL].padding = padding;
                 lineMapPosL++;
             }
 
             if (useR)
             {
                 lineMapR[lineMapPosR].inputPos = i;
-                lineMapR[lineMapPosR].type = typeR;
+                lineMapR[lineMapPosR].type = type;
+                lineMapR[lineMapPosR].padding = padding;
                 lineMapPosR++;
             }
 
@@ -163,26 +170,29 @@ char * getHTML()
         // Now we do the formatting work based on the map.
         for (i = 0; i < lineMapPosL; i++)
         {
+            bstring inputLineL = inputLines->entry[lineMapL[i].inputPos];
+            bstring inputLineR = inputLines->entry[lineMapR[i].inputPos];
+
             bcatcstr(html, "<tr>\n<td>\n");
 
             if (lineMapL[i].type == EMPTY)
             {
-                bcatcstr(html, "EMPTY");
+                bcatcstr(html, "<div class='line empty'>&nbsp;</div>");
             }
             else
             {
-                bconcat(html, inputLines->entry[lineMapL[i].inputPos]); // TODO: strip off first x chars from diff format
+                formatLine(html, inputLineL, typeString(lineMapL[i].type), lineMapL[i].padding);
             }
 
             bcatcstr(html, "\n</td>\n<td>\n");
 
             if (lineMapR[i].type == EMPTY)
             {
-                bcatcstr(html, "EMPTY");
+                bcatcstr(html, "<div class='line empty'>&nbsp;</div>");
             }
             else
             {
-                bconcat(html, inputLines->entry[lineMapR[i].inputPos]); // TODO: strip off first x chars from diff format
+                formatLine(html, inputLineR, typeString(lineMapR[i].type), lineMapR[i].padding);
             }
 
             bcatcstr(html, "\n</td>\n</tr>\n");
@@ -216,6 +226,65 @@ char * getHTMLHead()
         "      padding: 0;\n"
         "      font-family: monospace;\n"
         "    }\n"
+        "    .line.new {\n"
+        "      background: #aaffaa;\n"
+        "    }\n"
+        "    .line.old {\n"
+        "      background: #ffaaaa;\n"
+        "    }\n"
+        "    .line.empty {\n"
+        "      background: #dddddd;\n"
+        "    }\n"
+        "    table {\n"
+        "      border-collapse: collapse;\n"
+        "    }\n"
+        "    td {\n"
+        "      vertical-align: top;\n"
+        "    }\n"
         "  </style>\n"
         "</head>\n";
+}
+
+void formatLine(bstring base, bstring content, char * type, int padding)
+{
+    // TODO: there's a lot of string manipulation going on here. It might be
+    // good for performance to call ballocmin and boost the base string size by
+    // a big chunk.
+    bcatcstr(base, "<div class='line ");
+    bcatcstr(base, type);
+    bcatcstr(base, "'>");
+    content = bmidstr(content, padding, content->slen);
+    if (content->slen == 0) content = bfromcstr("&nbsp;");
+    bfindreplace(content, bfromcstr(" "), bfromcstr("&nbsp;"), 0);
+    bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), 0);
+    bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), 0);
+    bconcat(base, content);
+    bcatcstr(base, "</div>");
+}
+
+char * typeString(enum lineType type)
+{
+    switch (type)
+    {
+        case SAME:
+            return "same";
+        case OLD:
+            return "old";
+        case NEW:
+            return "new";
+        case CHANGE:
+            return "change";
+        case EMPTY:
+            return "empty";
+        case HEADER:
+            return "header";
+        case INFO:
+            return "info";
+        case OLD_FILE:
+            return "old_file";
+        case NEW_FILE:
+            return "new_file";
+    }
+
+    return "";
 }

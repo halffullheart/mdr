@@ -30,14 +30,14 @@ int main (int argc, const char * argv[])
         NSString* html = [NSString stringWithCString:body encoding:NSASCIIStringEncoding];
         free(body);
 
-        NSRect rect = NSMakeRect(0, 0, 640, 480);
+        NSRect rect = NSMakeRect(0, 0, 1000, 500);
 
         id window = [[[NSWindow alloc] initWithContentRect:rect
             styleMask:(NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask)
             backing:NSBackingStoreBuffered defer:NO]
                 autorelease];
 
-        [window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
+        [window cascadeTopLeftFromPoint:NSMakePoint(200,200)];
         [window setTitle:appName];
         [window makeKeyAndOrderFront:nil];
         [window orderFrontRegardless];
