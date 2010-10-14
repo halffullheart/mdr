@@ -9,7 +9,7 @@ enum bool {
 };
 
 enum lineType {
-    SAME,
+    SHARED,
     OLD,
     NEW,
     CHANGE,
@@ -21,7 +21,7 @@ enum lineType {
 };
 
 enum highlightMaskValue {
-    EQUAL,
+    SAME,
     DIFFERENT,
     END_MASK
 };
@@ -93,7 +93,7 @@ char * getHTML()
 
             useL = 0;
             useR = 0;
-            type = SAME;
+            type = SHARED;
             padding = 1;
 
             if (bisstemeqblk(inputLines->entry[i], oldFileId, 3) == 1)
@@ -143,14 +143,14 @@ char * getHTML()
             }
             else if (bdata(inputLines->entry[i])[0] == ' ')
             {
-                type = SAME;
+                type = SHARED;
                 useL = 1;
                 useR = 1;
             }
 
             // Balance
             if (type == HEADER ||
-                (type == SAME && (useL || useR)) ||
+                (type == SHARED && (useL || useR)) ||
                 i == inputLines->qty - 1)
             {
                 int difference = lineMapPosL - lineMapPosR;
@@ -237,7 +237,7 @@ char * getHTML()
                 {
                     if (inputLineL->data[j] == inputLineR->data[j])
                     {
-                        highlightMask[j] = EQUAL;
+                        highlightMask[j] = SAME;
                     }
                     else
                     {
@@ -472,7 +472,7 @@ char * typeString(enum lineType type)
 {
     switch (type)
     {
-        case SAME:     return "same";
+        case SHARED:   return "shared";
         case OLD:      return "old";
         case NEW:      return "new";
         case CHANGE:   return "change";
