@@ -3,10 +3,8 @@ require 'rake/clean'
 CLOBBER.include('mdr')
 CLEAN.include('*.o')
 
-task :default => 'mdr'
-
-file 'mdr' => ['MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
-  sh 'gcc -Wall -g bstrlib.o Reader.o MakeDiffReadable.m -o mdr -framework Cocoa -framework WebKit'
+file 'mac' => ['mac/MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
+  sh 'gcc -Wall -g bstrlib.o Reader.o mac/MakeDiffReadable.m -o build/mdr -framework Cocoa -framework WebKit'
 end
 
 file 'Reader.o' => ['Reader.c'] do
