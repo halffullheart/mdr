@@ -379,11 +379,14 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
 
     if (highlightMask != NULL)
     {
-        int lastState = 0;
+        enum highlightMaskValue lastState = SAME;
         int position = 0;
+        int advanceBy;
         int i;
         for (i = lineMap.padding; i < content->slen; i++)
         {
+            advanceBy = 1; // Normally advance by one char.
+
             if (highlightMask[i] == END_MASK)
             {
                 // If we've reached the end of the mask then this is the longer
@@ -397,21 +400,22 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
                 bcatcstr(content, "</em>");
                 break;
             }
+
             // Escape HTML as we go.
             if (content->data[position] == '<')
             {
                 breplace(content, position, 1, bfromcstr("&lt;"), ' ');
-                position += 3;
+                advanceBy += 3;
             }
             if (content->data[position] == '>')
             {
                 breplace(content, position, 1, bfromcstr("&gt;"), ' ');
-                position += 3;
+                advanceBy += 3;
             }
             if (content->data[position] == ' ')
             {
                 breplace(content, position, 1, bfromcstr("&nbsp;"), ' ');
-                position += 5;
+                advanceBy += 5;
             }
 
             if (highlightMask[i] != lastState)
@@ -419,16 +423,16 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
                 if (highlightMask[i] == DIFFERENT)
                 {
                     binsert(content, position, bfromcstr("<em>"), ' ');
-                    position += 4;
+                    advanceBy += 4;
                 }
                 else
                 {
                     binsert(content, position, bfromcstr("</em>"), ' ');
-                    position += 5;
+                    advanceBy += 5;
                 }
             }
 
-            position++;
+            position += advanceBy;
             lastState = highlightMask[i];
         }
     }
