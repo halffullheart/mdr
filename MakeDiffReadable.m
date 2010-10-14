@@ -35,7 +35,7 @@ int main (int argc, const char * argv[])
         NSRect rect = NSMakeRect(0, 0, 1000, 500);
 
         id window = [[[NSWindow alloc] initWithContentRect:rect
-            styleMask:(NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask)
+            styleMask:(NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask | NSMiniaturizableWindowMask)
             backing:NSBackingStoreBuffered defer:NO]
                 autorelease];
 
