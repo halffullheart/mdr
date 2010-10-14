@@ -104,6 +104,9 @@ char * getHTML()
             {
                 type = INFO;
                 syncLineNumbers(inputLines->entry[i], &lineNoL, &lineNoR);
+                useR = 1;
+                useL = 1;
+                padding = 1;
             }
             else if (bisstemeqblk(inputLines->entry[i], headerId, 3) == 1)
             {
@@ -115,21 +118,17 @@ char * getHTML()
             {
                 type = OLD;
                 useL = 1;
-                lineNoL++;
             }
             else if (bdata(inputLines->entry[i])[0] == '+')
             {
                 type = NEW;
                 useR = 1;
-                lineNoR++;
             }
             else if (bdata(inputLines->entry[i])[0] == ' ')
             {
                 type = SAME;
                 useL = 1;
                 useR = 1;
-                lineNoL++;
-                lineNoR++;
             }
 
             // Balance
@@ -165,6 +164,7 @@ char * getHTML()
                 lineMapL[lineMapPosL].padding = padding;
                 lineMapL[lineMapPosL].lineNo = lineNoL - 1;
                 lineMapPosL++;
+                lineNoL++;
             }
 
             if (useR)
@@ -174,6 +174,7 @@ char * getHTML()
                 lineMapR[lineMapPosR].padding = padding;
                 lineMapR[lineMapPosR].lineNo = lineNoR - 1;
                 lineMapPosR++;
+                lineNoR++;
             }
 
         }
@@ -199,6 +200,11 @@ char * getHTML()
 
             if (lineMapR[i].type != EMPTY) {
                 inputLineR = inputLines->entry[lineMapR[i].inputPos];
+            }
+
+            if (lineMapL[i].type == OLD && lineMapR[i].type == NEW) {
+                lineMapL[i].type = CHANGE;
+                lineMapR[i].type = CHANGE;
             }
 
             bcatcstr(html, "<tr>\n");
@@ -249,25 +255,43 @@ char * getHTMLHead()
         "      margin: 0;\n"
         "      padding: 0;\n"
         "      font-family: monospace;\n"
+        "      font-size: 13px;\n"
         "    }\n"
         "    table {\n"
+        "      width: 100%;\n"
         "      border-collapse: collapse;\n"
         "    }\n"
         "    td {\n"
         "      vertical-align: top;\n"
         "    }\n"
+        "    .line {\n"
+        "      color: #888888;\n"
+        "    }\n"
         "    .line.new {\n"
-        "      background: #aaffaa;\n"
+        "      background: #a7ff92;\n"
+        "      color: #000000;\n"
         "    }\n"
         "    .line.old {\n"
-        "      background: #ffaaaa;\n"
+        "      background: #c0bfff;\n"
+        "      color: #000000;\n"
+        "    }\n"
+        "    .line.change {\n"
+        "      background: #9af2ed;\n"
+        "      color: #000000;\n"
         "    }\n"
         "    .line.empty {\n"
-        "      background: #dddddd;\n"
+        "      background: #f5f5f5;\n"
+        "    }\n"
+        "    .line.info {\n"
+        "      height: 22px;\n"
+        "      background: #cccccc;\n"
+        "      font-size: 11px;\n"
+        "      text-align: center;\n"
         "    }\n"
         "    .line_number {\n"
-        "      padding: 0 8px;"
+        "      padding: 0 5px;"
         "      background: #cccccc;\n"
+        "      text-align: right;\n"
         "    }\n"
         "  </style>\n"
         "</head>\n";
@@ -275,6 +299,12 @@ char * getHTMLHead()
 
 void createLine(bstring base, bstring content, lineData lineMap)
 {
+    if (lineMap.type == INFO)
+    {
+        content = bfromcstr("");
+        lineMap.lineNo = 0;
+        lineMap.padding = 0;
+    }
 
     // TODO: there's a lot of string manipulation going on here. It might be
     // good for performance to call ballocmin and boost the base string size by
