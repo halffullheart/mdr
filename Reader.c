@@ -25,7 +25,7 @@ typedef struct {
 
 char * getHTMLHead();
 
-void createLine(bstring base, bstring content, lineData lineMap);
+void createLine(bstring base, bstring content, lineData lineMap, int * highlightMask);
 
 void createEmptyLine(bstring base);
 
@@ -194,6 +194,8 @@ char * getHTML()
             bstring inputLineL;
             bstring inputLineR;
 
+            int * highlightMask = NULL;
+
             if (lineMapL[i].type != EMPTY) {
                 inputLineL = inputLines->entry[lineMapL[i].inputPos];
             }
@@ -202,11 +204,33 @@ char * getHTML()
                 inputLineR = inputLines->entry[lineMapR[i].inputPos];
             }
 
+            // Compare changed lines
             if (lineMapL[i].type == OLD && lineMapR[i].type == NEW) {
+
                 lineMapL[i].type = CHANGE;
                 lineMapR[i].type = CHANGE;
+
+                int shorterLineLen = (inputLineL->slen < inputLineR->slen) ? inputLineL->slen : inputLineR->slen;
+                int longerLineLen = (inputLineL->slen > inputLineR->slen) ? inputLineL->slen : inputLineR->slen;
+
+                highlightMask = malloc((longerLineLen + 1) * sizeof(int));
+
+                int j;
+                for (j = 0; j < shorterLineLen; j++)
+                {
+                    if (inputLineL->data[j] == inputLineR->data[j])
+                    {
+                        highlightMask[j] = 0;
+                    }
+                    else
+                    {
+                        highlightMask[j] = 1;
+                    }
+                }
+                highlightMask[j] = 2; // Means end of the mask
             }
 
+            // Format output
             bcatcstr(html, "<tr>\n");
 
             if (lineMapL[i].type == EMPTY)
@@ -215,7 +239,7 @@ char * getHTML()
             }
             else
             {
-                createLine(html, inputLineL, lineMapL[i]);
+                createLine(html, inputLineL, lineMapL[i], highlightMask);
             }
 
             if (lineMapR[i].type == EMPTY)
@@ -224,10 +248,12 @@ char * getHTML()
             }
             else
             {
-                createLine(html, inputLineR, lineMapR[i]);
+                createLine(html, inputLineR, lineMapR[i], highlightMask);
             }
 
             bcatcstr(html, "</tr>\n");
+
+            if (highlightMask != NULL) free(highlightMask);
         }
 
         bcatcstr(html, "</table>\n</body>\n</html>\n");
@@ -289,21 +315,92 @@ char * getHTMLHead()
         "      text-align: center;\n"
         "    }\n"
         "    .line_number {\n"
-        "      padding: 0 5px;"
+        "      padding: 0 5px;\n"
         "      background: #cccccc;\n"
         "      text-align: right;\n"
+        "    }\n"
+        "    .line em {\n"
+        "      font-style: normal;\n"
+        "      background: #60d1cb;\n"
         "    }\n"
         "  </style>\n"
         "</head>\n";
 }
 
-void createLine(bstring base, bstring content, lineData lineMap)
+void createLine(bstring base, bstring content, lineData lineMap, int * highlightMask)
 {
     if (lineMap.type == INFO)
     {
         content = bfromcstr("");
         lineMap.lineNo = 0;
         lineMap.padding = 0;
+    }
+
+    // Remove diff formatting from beginning of line.
+    content = bmidstr(content, lineMap.padding, content->slen);
+    // Prep for HTML display
+    if (content->slen == 0) bcatcstr(content, "&nbsp;");
+
+    if (highlightMask != NULL)
+    {
+        int lastState = 0;
+        int position = 0;
+        int i;
+        for (i = lineMap.padding; i < content->slen; i++)
+        {
+            if (highlightMask[i] == 2)
+            {
+                // If we've reached the end of the mask then this is the longer
+                // line and the rest of it should be marked as different (or
+                // continue to be).
+                if (lastState == 0) binsert(content, position, bfromcstr("<em>"), ' ');
+                position += 4;
+                bfindreplace(content, bfromcstr(" "), bfromcstr("&nbsp;"), position);
+                bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), position);
+                bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), position);
+                bcatcstr(content, "</em>");
+                break;
+            }
+            // Escape HTML as we go.
+            if (content->data[position] == '<')
+            {
+                breplace(content, position, 1, bfromcstr("&lt;"), ' ');
+                position += 3;
+            }
+            if (content->data[position] == '>')
+            {
+                breplace(content, position, 1, bfromcstr("&gt;"), ' ');
+                position += 3;
+            }
+            if (content->data[position] == ' ')
+            {
+                breplace(content, position, 1, bfromcstr("&nbsp;"), ' ');
+                position += 5;
+            }
+
+            if (highlightMask[i] != lastState)
+            {
+                if (highlightMask[i] == 1)
+                {
+                    binsert(content, position, bfromcstr("<em>"), ' ');
+                    position += 4;
+                }
+                else
+                {
+                    binsert(content, position, bfromcstr("</em>"), ' ');
+                    position += 5;
+                }
+            }
+
+            position++;
+            lastState = highlightMask[i];
+        }
+    }
+    else
+    {
+        bfindreplace(content, bfromcstr(" "), bfromcstr("&nbsp;"), 0);
+        bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), 0);
+        bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), 0);
     }
 
     // TODO: there's a lot of string manipulation going on here. It might be
@@ -316,11 +413,6 @@ void createLine(bstring base, bstring content, lineData lineMap)
     bcatcstr(base, "<td class='line ");
     bcatcstr(base, typeString(lineMap.type));
     bcatcstr(base, "'>");
-    content = bmidstr(content, lineMap.padding, content->slen);
-    if (content->slen == 0) content = bfromcstr("&nbsp;");
-    bfindreplace(content, bfromcstr(" "), bfromcstr("&nbsp;"), 0);
-    bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), 0);
-    bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), 0);
     bconcat(base, content);
     bcatcstr(base, "</td>\n");
 
