@@ -3,6 +3,11 @@
 #include <string.h>
 #include "bstrlib.h"
 
+enum bool {
+    FALSE = 0,
+    TRUE = 1
+};
+
 enum lineType {
     SAME,
     OLD,
@@ -74,6 +79,7 @@ char * getHTML()
         int padding;
         int lineNoL = 0;
         int lineNoR = 0;
+        enum bool firstInfoLine = TRUE;
 
         // Map input lines to their output column (left, right, or both)
         int i;
@@ -89,30 +95,35 @@ char * getHTML()
                 type = OLD_FILE;
                 useL = 1;
                 padding = 4;
-                lineNoL = 0;
-                lineNoR = 0;
+                lineNoL = -1;
+                lineNoR = -1;
             }
             else if (bisstemeqblk(inputLines->entry[i], newFileId, 3) == 1)
             {
                 type = NEW_FILE;
                 useR = 1;
                 padding = 4;
-                lineNoL = 0;
-                lineNoR = 0;
+                lineNoL = -1;
+                lineNoR = -1;
             }
             else if (bisstemeqblk(inputLines->entry[i], lineInfoId, 3) == 1)
             {
-                type = INFO;
                 syncLineNumbers(inputLines->entry[i], &lineNoL, &lineNoR);
-                useR = 1;
-                useL = 1;
-                padding = 1;
+                if (!firstInfoLine)
+                {
+                    type = INFO;
+                    useR = 1;
+                    useL = 1;
+                    padding = 1;
+                }
+                firstInfoLine = FALSE;
             }
             else if (bisstemeqblk(inputLines->entry[i], headerId, 3) == 1)
             {
                 type = HEADER;
                 lineNoL = 0;
                 lineNoR = 0;
+                firstInfoLine = TRUE;
             }
             else if (bdata(inputLines->entry[i])[0] == '-')
             {
@@ -185,7 +196,7 @@ char * getHTML()
         {
             char * error = malloc(100 * sizeof(char));
             snprintf(error, 100, "Columns not equal in length. L:%i R:%i\n", lineMapPosL, lineMapPosR);
-            return error; // Caller should free()
+            return error; // Caller should free().
         }
 
         // Now we do the formatting work based on the map.
@@ -227,7 +238,7 @@ char * getHTML()
                         highlightMask[j] = 1;
                     }
                 }
-                highlightMask[j] = 2; // Means end of the mask
+                highlightMask[j] = 2; // Means end of the mask. TODO: change to enum
             }
 
             // Format output
@@ -291,33 +302,51 @@ char * getHTMLHead()
         "      vertical-align: top;\n"
         "    }\n"
         "    .line {\n"
-        "      color: #888888;\n"
+        "      color: #888;\n"
+        "    }\n"
+        "    .line.new_file,\n"
+        "    .line.old_file {\n"
+        "      padding: 8px 5px 8px 12px;\n"
+        "      font-size: 13px;\n"
+        "      font-family: 'Lucida Grande', sans-serif;\n"
+        "      background: #f5f5f5;\n"
+        "      color: #000;\n"
+        "      border-top: 1px solid #fff;\n"
+        "      border-right: 1px solid #ccc;\n"
+        "      border-bottom: 1px solid #ccc;\n"
+        "      border-left: 1px solid #ccc;\n"
         "    }\n"
         "    .line.new {\n"
         "      background: #a7ff92;\n"
-        "      color: #000000;\n"
+        "      color: #000;\n"
         "    }\n"
         "    .line.old {\n"
         "      background: #c0bfff;\n"
-        "      color: #000000;\n"
+        "      color: #000;\n"
         "    }\n"
         "    .line.change {\n"
         "      background: #9af2ed;\n"
-        "      color: #000000;\n"
+        "      color: #000;\n"
         "    }\n"
         "    .line.empty {\n"
         "      background: #f5f5f5;\n"
         "    }\n"
         "    .line.info {\n"
         "      height: 22px;\n"
-        "      background: #cccccc;\n"
+        "      background: #ddd;\n"
+        "      border-top: 1px solid #ccc;\n"
+        "      border-bottom: 1px solid #fff;\n"
+        "      border-left: 1px solid #ccc;\n"
         "      font-size: 11px;\n"
         "      text-align: center;\n"
         "    }\n"
         "    .line_number {\n"
         "      padding: 0 5px;\n"
-        "      background: #cccccc;\n"
+        "      background: #eee;\n"
+        "      color: #888;\n"
         "      text-align: right;\n"
+        "      border-right: 1px solid #ccc;\n"
+        "      border-left: 1px solid #ccc;\n"
         "    }\n"
         "    .line em {\n"
         "      font-style: normal;\n"
@@ -338,6 +367,7 @@ void createLine(bstring base, bstring content, lineData lineMap, int * highlight
 
     // Remove diff formatting from beginning of line.
     content = bmidstr(content, lineMap.padding, content->slen);
+
     // Prep for HTML display
     if (content->slen == 0) bcatcstr(content, "&nbsp;");
 
@@ -406,17 +436,25 @@ void createLine(bstring base, bstring content, lineData lineMap, int * highlight
     // TODO: there's a lot of string manipulation going on here. It might be
     // good for performance to call ballocmin and boost the base string size by
     // a big chunk.
-    char * lineNo = lineNumberString(lineMap.lineNo);
-    bcatcstr(base, "<td class='line_number'>");
-    bcatcstr(base, lineNo);
-    bcatcstr(base, "</td>\n");
-    bcatcstr(base, "<td class='line ");
+
+    if (lineMap.lineNo >= 0 && lineMap.type != INFO)
+    {
+        char * lineNo = lineNumberString(lineMap.lineNo);
+        bcatcstr(base, "<td class='line_number'>");
+        bcatcstr(base, lineNo);
+        bcatcstr(base, "</td>\n");
+        bcatcstr(base, "<td class='line ");
+        free(lineNo);
+    }
+    else
+    {
+        bcatcstr(base, "<td colspan='2' class='line ");
+    }
     bcatcstr(base, typeString(lineMap.type));
     bcatcstr(base, "'>");
     bconcat(base, content);
     bcatcstr(base, "</td>\n");
 
-    free(lineNo);
 }
 
 void createEmptyLine(bstring base)
