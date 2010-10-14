@@ -20,6 +20,12 @@ enum lineType {
     NEW_FILE
 };
 
+enum highlightMaskValue {
+    EQUAL,
+    DIFFERENT,
+    END_MASK
+};
+
 typedef struct {
     enum lineType type;
     int inputPos;
@@ -30,7 +36,7 @@ typedef struct {
 
 char * getHTMLHead();
 
-void createLine(bstring base, bstring content, lineData lineMap, int * highlightMask);
+void createLine(bstring base, bstring content, lineData lineMap, enum highlightMaskValue * highlightMask);
 
 void createEmptyLine(bstring base);
 
@@ -205,7 +211,7 @@ char * getHTML()
             bstring inputLineL;
             bstring inputLineR;
 
-            int * highlightMask = NULL;
+            enum highlightMaskValue * highlightMask = NULL;
 
             if (lineMapL[i].type != EMPTY) {
                 inputLineL = inputLines->entry[lineMapL[i].inputPos];
@@ -231,14 +237,14 @@ char * getHTML()
                 {
                     if (inputLineL->data[j] == inputLineR->data[j])
                     {
-                        highlightMask[j] = 0;
+                        highlightMask[j] = EQUAL;
                     }
                     else
                     {
-                        highlightMask[j] = 1;
+                        highlightMask[j] = DIFFERENT;
                     }
                 }
-                highlightMask[j] = 2; // Means end of the mask. TODO: change to enum
+                highlightMask[j] = END_MASK;
             }
 
             // Format output
@@ -356,7 +362,7 @@ char * getHTMLHead()
         "</head>\n";
 }
 
-void createLine(bstring base, bstring content, lineData lineMap, int * highlightMask)
+void createLine(bstring base, bstring content, lineData lineMap, enum highlightMaskValue * highlightMask)
 {
     if (lineMap.type == INFO)
     {
@@ -378,7 +384,7 @@ void createLine(bstring base, bstring content, lineData lineMap, int * highlight
         int i;
         for (i = lineMap.padding; i < content->slen; i++)
         {
-            if (highlightMask[i] == 2)
+            if (highlightMask[i] == END_MASK)
             {
                 // If we've reached the end of the mask then this is the longer
                 // line and the rest of it should be marked as different (or
@@ -410,7 +416,7 @@ void createLine(bstring base, bstring content, lineData lineMap, int * highlight
 
             if (highlightMask[i] != lastState)
             {
-                if (highlightMask[i] == 1)
+                if (highlightMask[i] == DIFFERENT)
                 {
                     binsert(content, position, bfromcstr("<em>"), ' ');
                     position += 4;
