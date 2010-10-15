@@ -1,6 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
-#import "Reader.h"
+#import "../Reader.h"
 
 @interface MDRApplicationDelegate : NSObject
 @end

@@ -6,7 +6,7 @@ CLEAN.include('*.o')
 
 task :default => 'mdr'
 
-if Config::CONFIG['target_os'] == 'mac' # TODO: Verrify 'mac' is correct
+if Config::CONFIG['target_os'] == 'darwin10'
   file 'mdr' => ['mac/MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
     sh 'gcc -Wall -g bstrlib.o Reader.o mac/MakeDiffReadable.m -o mdr -framework Cocoa -framework WebKit'
   end
