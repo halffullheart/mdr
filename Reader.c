@@ -46,6 +46,12 @@ char * lineNumberString(int lineNo);
 
 void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
 
+int charSimilarity(char a, char b);
+
+int max2(int a, int b);
+
+int max3(int a, int b, int c);
+
 
 char * getHTML()
 {
@@ -515,6 +521,9 @@ void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
     sscanf(bstr2cstr(infoString, ' '), "@@ -%d,%*d +%d,%*d", lineNoL, lineNoR);
 }
 
+/* Align two strings using dynamic programming. Based on an algorithm
+ * described at http://www.biorecipes.com/DynProgBasic/code.html for aligning
+ * sequences of DNA base pairs */
 bstring alignStrings(bstring s, bstring t)
 {
     int n = s->slen;
@@ -559,16 +568,32 @@ bstring alignStrings(bstring s, bstring t)
         }
     }
 
+    // Calculate values for first row.
     for (j = 0; j <= n; j++)
     {
         D[0][j] = gapScore * j;
     }
 
+    // Calculate values for first column.
     for (i = 0; i <= m; i++)
     {
         D[i][0] = gapScore * i;
     }
 
+    // Calculate inside of matrix.
+    for (i = 1; i <= m; i++)
+    {
+        for (j = 1; j <= n; j++)
+        {
+            int match = D[i-1][j-1] + charSimilarity(s->data[j-1], t->data[i-1]);
+            int sGap = D[i][j-1] + gapScore;
+            int tGap = D[i-1][j] + gapScore;
+            D[i][j] = max3(match, sGap, tGap);
+        }
+    }
+
+    bstring sAlign = bfromcstralloc(max2(m, n), "");
+    bstring tAlign = bfromcstralloc(max2(m, n), "");
 
     // Print matrix for testing.
     for (x = 0; x < rows; x++)
@@ -580,12 +605,82 @@ bstring alignStrings(bstring s, bstring t)
         printf("\n");
     }
 
+    i = m;
+    j = n;
+    while (i > 0 && j > 0)
+    {
+        //printf("i:%i j:%i\n", i, j);
+        if ((D[i][j] - charSimilarity(s->data[j-1], t->data[i-1])) == D[i-1][j-1])
+        {
+            binsertch(tAlign, 0, 1, t->data[i-1]);
+            binsertch(sAlign, 0, 1, s->data[j-1]);
+            i--;
+            j--;
+        }
+        else if (D[i][j] - gapScore == D[i][j-1])
+        {
+            binsertch(sAlign, 0, 1, s->data[j-1]);
+            binsertch(tAlign, 0, 1, '_');
+            j--;
+        }
+        else if (D[i][j] - gapScore == D[i-1][j])
+        {
+            binsertch(tAlign, 0, 1, t->data[i-1]);
+            binsertch(sAlign, 0, 1, '_');
+            i--;
+        }
+        else
+        {
+            printf("<GOB>I've made a huge mistake.</GOB>\n");
+        }
+    }
+
+    //printf("Last i:%i j:%i\n", i, j);
+    if (j > 0)
+    {
+        while (j > 0)
+        {
+            binsertch(sAlign, 0, 1, s->data[j-1]);
+            binsertch(tAlign, 0, 1, '_');
+            j--;
+        }
+    }
+    else if (i > 0)
+    {
+        while (i > 0)
+        {
+            binsertch(tAlign, 0, 1, t->data[i-1]);
+            binsertch(sAlign, 0, 1, '_');
+            i--;
+        }
+    }
+
+    printf("Alignment:\n%s\n%s\n", bdata(sAlign), bdata(tAlign));
+
     // Deallocate matrix memory.
-    for (x = 0; x < cols; x++)
+    for (x = 0; x < rows; x++)
     {
         free(D[x]);
     }
     free(D);
 
     return bfromcstr("no-op");
+}
+
+int charSimilarity(char a, char b)
+{
+    // For now, just give 2 pts for equality, everything else gets -1.
+    return (a == b) ? 2 : -1;
+}
+
+int max2(int a, int b)
+{
+    if (a > b) return a;
+    else return b;
+}
+
+int max3(int a, int b, int c)
+{
+    if (a > b) return max2(a, c);
+    else return max2(b, c);
 }
