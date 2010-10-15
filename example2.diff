@@ -1,0 +1,55 @@
+diff -r 37d90303c1c4 Reader.c
+--- a/Reader.c	Tue Oct 12 05:01:47 2010 -0700
++++ b/Reader.c	Tue Oct 12 05:12:05 2010 -0700
+@@ -1,33 +1,40 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-char* addToString(char* existing, char* new, int* size, int growByIfNeeded);
++#define CHUNK_SIZE 1000
++
++char* newString();
++char* addToString(char* existing, char* new, int* size);
+ 
+ char* getHTML()
+ {
+-    const int memChunkSize = 200;
+-
+     char* body;
+-    int bodylen = memChunkSize;
+-    body = (char*)malloc(memChunkSize * sizeof(char));
++    int bodyLen;
++    body = newString(&bodyLen);
+ 
+     while(!feof(stdin)) {
+-        char line[memChunkSize];
+-        fgets(line, memChunkSize, stdin);
+-        body = addToString(body, line, &bodylen, memChunkSize);
++        char line[CHUNK_SIZE];
++        fgets(line, CHUNK_SIZE, stdin);
++        body = addToString(body, line, &bodyLen);
+     }
+ 
+     return body;
+ }
+ 
+-char* addToString(char* existing, char* new, int* size, int growByIfNeeded)
++char* newString(int* size)
++{
++    *size = CHUNK_SIZE;
++    return (char*)malloc(CHUNK_SIZE * sizeof(char));
++}
++
++char* addToString(char* existing, char* new, int* size)
+ {
+     if (strlen(existing) + strlen(new) + 1 > *size) // Add 1 to account for null-terminator
+     {
+-        existing = (char*)realloc(existing, (*size + growByIfNeeded) * sizeof(char));
+-        *size += growByIfNeeded;
++        existing = (char*)realloc(existing, (*size + CHUNK_SIZE) * sizeof(char));
++        *size += CHUNK_SIZE;
+     }
+     strcat(existing, new);
+     return existing;
+ }

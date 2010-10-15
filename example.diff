@@ -1,0 +1,32 @@
+diff -r de3d2887bde1 test/fixtures/accounts.yml
+--- a/test/fixtures/accounts.yml	Sat Oct 09 23:58:43 2010 -0700
++++ b/test/fixtures/accounts.yml	Mon Oct 11 22:10:39 2010 -0700
+@@ -1,7 +1,9 @@
+ # Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+ 
+ one:
+-  name: MyString
++  name: Acme Design
++  subdomain: acme
+ 
+ two:
+-  name: MyString
++  name: Oxygen
++  subdomain: oxygen
+diff -r de3d2887bde1 test/fixtures/users.yml
+--- a/test/fixtures/users.yml	Sat Oct 09 23:58:43 2010 -0700
++++ b/test/fixtures/users.yml	Mon Oct 11 22:10:39 2010 -0700
+@@ -4,8 +4,8 @@
+ # model remove the '{}' from the fixture names and add the columns immediately
+ # below each fixture, per the syntax in the comments below
+ #
+-one: {}
+-# column: value
+-#
+-two: {}
+-#  column: value
++one:
++  email: user@example.com
++  # password = 'password'
++  encrypted_password: '$2a$10$4n6NbUyW0Jg5a3QvVyk9neQjwj14V.OHr2x1X6KYND4Xz0sjcDL3C'
++  password_salt: '$2a$10$4n6NbUyW0Jg5a3QvVyk9ne'
