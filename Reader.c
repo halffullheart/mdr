@@ -292,7 +292,7 @@ char * getHTMLHead()
 {
     return
        "<head>\n"
-        "  <title></title>\n"
+        "  <title>mdr</title>\n"
         "  <style type='text/css'>\n"
         "    body {\n"
         "      margin: 0;\n"

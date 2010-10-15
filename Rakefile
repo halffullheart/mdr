@@ -1,8 +1,7 @@
 require 'rake/clean'
 require 'rbconfig'
 
-CLOBBER.include('macmdr')
-CLOBBER.include('winmdr')
+CLOBBER.include('mdr')
 CLEAN.include('*.o')
 
 task :default => 'mdr'
