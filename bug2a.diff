@@ -1,0 +1,529 @@
+diff -r e0b8424cabef NOTES
+--- a/NOTES	Fri Oct 15 06:21:58 2010 -0700
++++ b/NOTES	Fri Oct 15 06:24:06 2010 -0700
+@@ -3,6 +3,7 @@
+ 
+ 1. There is a bug where the ends of longer lines aren't HTML escaped. If there is HTML in there it might cause the rest of the line to not display properly. See the bottom of the output for bug1.diff.
+ 
++2. When the content of a diff is another diff, things get ugly. See output of bug2.diff. Look at the @@ lines.
+ 
+ 
+ Highlighting examples
+diff -r e0b8424cabef bug2.diff
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/bug2.diff	Fri Oct 15 06:24:06 2010 -0700
+@@ -0,0 +1,514 @@
++diff -r 937419621713 NOTES
++--- a/NOTES	Fri Oct 15 06:17:59 2010 -0700
+++++ b/NOTES	Fri Oct 15 06:21:36 2010 -0700
++@@ -1,7 +1,7 @@
++ Bugs
++ ====
++ 
++-* There is a bug where the ends of longer lines aren't HTML escaped. If there is HTML in there it might cause the rest of the line to not display properly.
+++1. There is a bug where the ends of longer lines aren't HTML escaped. If there is HTML in there it might cause the rest of the line to not display properly. See the bottom of the output for bug1.diff.
++ 
++ 
++ 
++diff -r 937419621713 bug1.diff
++--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
+++++ b/bug1.diff	Fri Oct 15 06:21:36 2010 -0700
++@@ -0,0 +1,498 @@
+++diff -r 8407b05deb24 -r fa36f5ce63a1 Reader.c
+++--- a/Reader.c	Fri Oct 15 04:20:53 2010 -0700
++++++ b/Reader.c	Fri Oct 15 06:15:42 2010 -0700
+++@@ -46,6 +46,12 @@
+++ 
+++ void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
+++ 
++++int charSimilarity(char a, char b);
++++
++++int max2(int a, int b);
++++
++++int max3(int a, int b, int c);
++++
+++ 
+++ char * getHTML()
+++ {
+++@@ -515,6 +521,9 @@
+++     sscanf(bstr2cstr(infoString, ' '), "@@ -%d,%*d +%d,%*d", lineNoL, lineNoR);
+++ }
+++ 
++++/* Align two strings using dynamic programming. Based on an algorithm
++++ * described at http://www.biorecipes.com/DynProgBasic/code.html for aligning
++++ * sequences of DNA base pairs */
+++ bstring alignStrings(bstring s, bstring t)
+++ {
+++     int n = s->slen;
+++@@ -559,16 +568,32 @@
+++         }
+++     }
+++ 
++++    // Calculate values for first row.
+++     for (j = 0; j <= n; j++)
+++     {
+++         D[0][j] = gapScore * j;
+++     }
+++ 
++++    // Calculate values for first column.
+++     for (i = 0; i <= m; i++)
+++     {
+++         D[i][0] = gapScore * i;
+++     }
+++ 
++++    // Calculate inside of matrix.
++++    for (i = 1; i <= m; i++)
++++    {
++++        for (j = 1; j <= n; j++)
++++        {
++++            int match = D[i-1][j-1] + charSimilarity(s->data[j-1], t->data[i-1]);
++++            int sGap = D[i][j-1] + gapScore;
++++            int tGap = D[i-1][j] + gapScore;
++++            D[i][j] = max3(match, sGap, tGap);
++++        }
++++    }
++++
++++    bstring sAlign = bfromcstralloc(max2(m, n), "");
++++    bstring tAlign = bfromcstralloc(max2(m, n), "");
+++ 
+++     // Print matrix for testing.
+++     for (x = 0; x < rows; x++)
+++@@ -580,8 +605,60 @@
+++         printf("\n");
+++     }
+++ 
++++    i = m;
++++    j = n;
++++    while (i > 0 && j > 0)
++++    {
++++        //printf("i:%i j:%i\n", i, j);
++++        if ((D[i][j] - charSimilarity(s->data[j-1], t->data[i-1])) == D[i-1][j-1])
++++        {
++++            binsertch(tAlign, 0, 1, t->data[i-1]);
++++            binsertch(sAlign, 0, 1, s->data[j-1]);
++++            i--;
++++            j--;
++++        }
++++        else if (D[i][j] - gapScore == D[i][j-1])
++++        {
++++            binsertch(sAlign, 0, 1, s->data[j-1]);
++++            binsertch(tAlign, 0, 1, '_');
++++            j--;
++++        }
++++        else if (D[i][j] - gapScore == D[i-1][j])
++++        {
++++            binsertch(tAlign, 0, 1, t->data[i-1]);
++++            binsertch(sAlign, 0, 1, '_');
++++            i--;
++++        }
++++        else
++++        {
++++            printf("<GOB>I've made a huge mistake.</GOB>\n");
++++        }
++++    }
++++
++++    //printf("Last i:%i j:%i\n", i, j);
++++    if (j > 0)
++++    {
++++        while (j > 0)
++++        {
++++            binsertch(sAlign, 0, 1, s->data[j-1]);
++++            binsertch(tAlign, 0, 1, '_');
++++            j--;
++++        }
++++    }
++++    else if (i > 0)
++++    {
++++        while (i > 0)
++++        {
++++            binsertch(tAlign, 0, 1, t->data[i-1]);
++++            binsertch(sAlign, 0, 1, '_');
++++            i--;
++++        }
++++    }
++++
++++    printf("Alignment:\n%s\n%s\n", bdata(sAlign), bdata(tAlign));
++++
+++     // Deallocate matrix memory.
+++-    for (x = 0; x < cols; x++)
++++    for (x = 0; x < rows; x++)
+++     {
+++         free(D[x]);
+++     }
+++@@ -589,3 +666,21 @@
+++ 
+++     return bfromcstr("no-op");
+++ }
++++
++++int charSimilarity(char a, char b)
++++{
++++    // For now, just give 2 pts for equality, everything else gets -1.
++++    return (a == b) ? 2 : -1;
++++}
++++
++++int max2(int a, int b)
++++{
++++    if (a > b) return a;
++++    else return b;
++++}
++++
++++int max3(int a, int b, int c)
++++{
++++    if (a > b) return max2(a, c);
++++    else return max2(b, c);
++++}
+++diff -r 8407b05deb24 -r fa36f5ce63a1 Reader.h
+++--- a/Reader.h	Fri Oct 15 04:20:53 2010 -0700
++++++ b/Reader.h	Fri Oct 15 06:15:42 2010 -0700
+++@@ -3,3 +3,7 @@
+++ char * getHTML();
+++ 
+++ bstring alignStrings(bstring s, bstring t);
++++
++++int max2(int a, int b);
++++
++++int max3(int a, int b, int c);
+++diff -r 8407b05deb24 -r fa36f5ce63a1 string_alignment.html
+++--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++++ b/string_alignment.html	Fri Oct 15 06:15:42 2010 -0700
+++@@ -0,0 +1,326 @@
++++<HTML><HEAD>
++++<!-- automatically generated by Darwin
++++prepared on Fri Sep  2 16:54:18 MEST 2005
++++running on linneus47
++++by user darwin
++++-->
++++<TITLE>String Alignment using Dynamic Programming</TITLE>
++++</HEAD><BODY  bgcolor="white">
++++<center><h1>String Alignment using Dynamic Programming</h1></center><br><center><i><font color="#0000FF">by Gina M. Cannarozzi</font></i></center><p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dynamic programming is an algorithm in which an optimization
++++problem is solved by saving the optimal scores for the solution of every 
++++subproblem instead of recalculating them. In this biorecipe, we will use
++++the dynamic programming algorithm to 
++++calculate the optimal score and to find the optimal
++++alignment between two strings.  First, we will compute the optimal alignment
++++for every substring and save those scores in a matrix.  
++++For two strings, s of length m and t of length n, D[i,j] is defined 
++++to be the best score of aligning the two substrings s[1..j] and t[1..i].</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;Several different kinds of string alignment 
++++can be done with the dynamic programming algorithm.  
++++For global alignment, the conditions are set such that we
++++compute the best score and find the best alignment of two 
++++complete strings, while 
++++for local alignment, the conditions are such that we find the highest 
++++possible scoring substrings.
++++For global alignment with cost-free end gaps we want to compute 
++++the best score for
++++aligning two complete strings with no penalty for opening 
++++gaps on the ends.  
++++These three approaches differ in the base conditions, the methods
++++of calculating the score and in the location of the endpoint.
++++For global alignment, which we will consider in this biorecipe,
++++the best score for the alignment is precisely D[m,n], the last value
++++in the table.  We will 
++++compute D[m,n] by computing D[i,j] for all values of i and j where
++++i ranges from 0 to m and j ranges from 0 to n.  These scores,
++++the D[i,j] are the optimal scores for aligning every substring,
++++s[1..j] and t[1..i].</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;This is the standard dynamic programming approach.
++++In general, dynamic programming has two
++++phases- the forward phase and the backward phase.   In the forward
++++phase, we compute the optimal cost for each subproblem.  In the 
++++backward phase, we reconstruct the solution that gives the optimal
++++cost.  For our string matching problem, specifically, we will:</p>
++++<p><table cellspacing=3><tr><td align=left valign=top>(i)</td><td align=left>use the recurrence relation to do the tabular computation 
++++of all D[i,j] (forward phase), and</td></tr>
++++<tr><td align=left valign=top>(ii)</td><td align=left>do a traceback to find the optimal alignment4.</td></tr>
++++</table></p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;The recurrence relation establishes a relationship 
++++between D[i,j] and values of D with indices smaller than i and j.
++++When there are no smaller values of i and j then the values of
++++D[i,j] must be stated explicitly in the base conditions.  
++++The base conditions are used to calculate the scores in the first row
++++and column where there are no matrix elements above and to the left.  
++++This corresponds to aligning with strings of gaps.
++++After the base conditions have been established, the recurrence 
++++relation is used to compute all values of D[i,j] in the table.
++++</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;The recurrence relation is: </p>
++++<pre>
++++   D[i,j] = max{ D[i-1,j-1] + sim_mat[s[j],t[i]],
++++                 D[i-1,j] + gap_score,
++++                 D[i,j-1] + gap_score }
++++</pre><p>&nbsp;&nbsp;&nbsp;&nbsp;In other words, if you have an optimal alignment
++++up to D[i-1,j-1] there are only three possibilities of what
++++could happen next:</p>
++++<p><table cellspacing=3><tr><td align=left valign=top>1. </td><td align=left>the characters for s[i] and t[j] match,</td></tr>
++++<tr><td align=left valign=top>2. </td><td align=left>a gap is introduced in t and</td></tr>
++++<tr><td align=left valign=top>3. </td><td align=left>a gap is introduced in s</td></tr>
++++</table></p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;It is not possible to add a gap to both
++++substrings.  The maximum of the three
++++scores will be chosen as the optimal score and is written in
++++matrix element D[i,j].</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;The second phase is to construct the optimal alignment
++++by tracing back in the matrix any path from D[m,n] to D[0,0] that 
++++led to the highest score.  More than one possibility can exist because
++++it is possible that there are more than one ways of achieving 
++++the optimal score in each matrix element D[i,j].  </p>
++++<h2>Initialization</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Now we will run an example on two strings of DNA, ACGGTAG
++++and CCTAAG.  
++++First, the two strings are assigned to variables, s and t
++++and their lengths to n and m, respectively.</p>
++++<font color="#00AA00"><pre>s := 'ACGGTAG'; t := 'CCTAAG';</pre>
++++</font><font color="#FF0000"><pre>s := ACGGTAG
++++t := CCTAAG
++++</pre>
++++</font><font color="#00AA00"><pre>n := length(s); m := length(t);</pre>
++++</font><font color="#FF0000"><pre>n := 7
++++m := 6
++++</pre>
++++</font><p>&nbsp;&nbsp;&nbsp;&nbsp;A matrix D is created to save the optimal dynamic programming 
++++scores for every pair of substrings up to that point. This matrix 
++++has dimensions (m+1) by (n+1).  At the beginning the matrix looks like
++++this: </p>
++++<center><TABLE BORDER=1 CELLSPACING=3 CELLPADDING=8><TR><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>A</TD><TD ALIGN=CENTER>C</TD><TD ALIGN=CENTER>G</TD><TD ALIGN=CENTER>G</TD><TD ALIGN=CENTER>T</TD><TD ALIGN=CENTER>A</TD><TD ALIGN=CENTER>C</TD></TR>
++++<TR><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>0</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD></TR>
++++<TR><TD ALIGN=CENTER>C</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD></TR>
++++<TR><TD ALIGN=CENTER>C</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD></TR>
++++<TR><TD ALIGN=CENTER>T</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD></TR>
++++<TR><TD ALIGN=CENTER>A</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD></TR>
++++<TR><TD ALIGN=CENTER>A</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD></TR>
++++<TR><TD ALIGN=CENTER>G</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD><TD ALIGN=CENTER>&nbsp;</TD></TR>
++++</TABLE></center>
++++<font color="#00AA00"><pre>D := CreateArray(1..m+1, 1..n+1 ,0):</pre>
++++</font><font color="#FF0000"><pre></pre>
++++</font><h2>Create a Scoring Matrix</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;A scoring matrix for scoring substitutions, matches,
++++and gap creation is needed.  This scoring matrix is chosen arbitrarily but of course it
++++is preferable if the scoring has some basis in reality. Because the strings in
++++this example are DNA, the scoring matrix used is appropriate for DNA.</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;The four 
++++DNA bases are of two types, purines (A and G) and pyrimidines (T and C).  The
++++purines are chemically similar to each other and the pyrimidines are chemically 
++++similar to each other.  Therefore, we will penalize substitutions between a purine and a purine
++++or between a pyrimidine and a pyrimidine (transitions) less heavily than 
++++substitutions between purines and pyrimidines (transversions).
++++We will use the following matrix for substitutions and matchings. The score
++++is 2 for a match, 1 for a purine with a purine or a pyrimidine with
++++a pyrimidine, and -1 for a purine with a pyrimidine. </p>
++++<center><TABLE BORDER=1 CELLSPACING=3 CELLPADDING=8><TR><TD ALIGN=CENTER> </TD><TD ALIGN=CENTER> A</TD><TD ALIGN=CENTER> C</TD><TD ALIGN=CENTER> G</TD><TD ALIGN=CENTER> T</TD></TR>
++++<TR><TD ALIGN=CENTER>A</TD><TD ALIGN=CENTER> 2</TD><TD ALIGN=CENTER>-1</TD><TD ALIGN=CENTER> 1</TD><TD ALIGN=CENTER>-1</TD></TR>
++++<TR><TD ALIGN=CENTER>C</TD><TD ALIGN=CENTER>-1</TD><TD ALIGN=CENTER> 2</TD><TD ALIGN=CENTER>-1</TD><TD ALIGN=CENTER> 1</TD></TR>
++++<TR><TD ALIGN=CENTER>G</TD><TD ALIGN=CENTER> 1</TD><TD ALIGN=CENTER>-1</TD><TD ALIGN=CENTER> 2</TD><TD ALIGN=CENTER>-1</TD></TR>
++++<TR><TD ALIGN=CENTER>T</TD><TD ALIGN=CENTER>-1</TD><TD ALIGN=CENTER> 1</TD><TD ALIGN=CENTER>-1</TD><TD ALIGN=CENTER> 2</TD></TR>
++++</TABLE></center>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;For more information on scoring matrices, see the following biorecipe:</p>
++++<a href="http://www.biorecipes.com//NigerianPrince/code.html"></a><p>&nbsp;&nbsp;&nbsp;&nbsp;
++++Create an array called sim_mat with these values and assign
++++the score for introducing a gap. In this case, a constant gap 
++++penalty of  -2 is the score of aligning a character of
++++either sequence with a gap. The variable
++++gap_score is assigned with the gap penalty of -2.
++++</p>
++++<font color="#00AA00"><pre>sim_mat := [ 
++++[2, -1, 1, -1], 
++++[-1, 2, -1, 1],
++++[1, -1, 2, -1],
++++[-1, 1, -1, 2]]: 
++++
++++gap_score := -2:</pre>
++++</font><font color="#FF0000"><pre></pre>
++++</font><h2>Initialize the dynamic programming calculation using base conditions</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;
++++The first element of the matrix that is filled in is the D[1,1] which
++++is assigned 0. There is no penalty or score of aligning nothing
++++with nothing. Recall that to calculate matrix element D[i,j], 
++++the values of D[i-1,j-1], D[i,j-1] and D[i-1,j] are needed. 
++++The first row and column of the dynamic programming
++++matrix are the scores of aligning the subsequences s[1..j] and 
++++t[1..i] against a string of gaps of length j or i, respectively. 
++++Knowing this, the scores of the first row and column can be 
++++calculated.
++++</p>
++++<font color="#00AA00"><pre>D[1,1] := 0;</pre>
++++</font><font color="#FF0000"><pre>D[1,1] := 0
++++</pre>
++++</font><p>&nbsp;&nbsp;&nbsp;&nbsp;
++++The recurrence relation for the first row and column is:
++++</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;
++++D[1,j] = D[1,j-1] + gap_score;
++++</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;
++++D[i,1] = D[i-1,1] + gap_score;
++++</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;
++++Put these into loops and initialize the first row and column.
++++</p>
++++<font color="#00AA00"><pre>
++++for j to n do
++++  D[1,j+1] := gap_score*j:
++++od:
++++</pre>
++++</font><font color="#FF0000"><pre></pre>
++++</font><font color="#00AA00"><pre>
++++for i to m do
++++  D[i+1,1] := gap_score*i:
++++od:
++++</pre>
++++</font><font color="#FF0000"><pre></pre>
++++</font><font color="#00AA00"><pre>
++++print(D);
++++</pre>
++++</font><font color="#FF0000"><pre>   0  -2  -4  -6  -8 -10 -12 -14
++++  -2   0   0   0   0   0   0   0
++++  -4   0   0   0   0   0   0   0
++++  -6   0   0   0   0   0   0   0
++++  -8   0   0   0   0   0   0   0
++++ -10   0   0   0   0   0   0   0
++++ -12   0   0   0   0   0   0   0
++++</pre>
++++</font><p>&nbsp;&nbsp;&nbsp;&nbsp;
++++Each score is the highest score of aligning
++++up to that point. Matrix element D[1,3] is -4 which 
++++is the best score
++++of aligning AC against two gaps at that point.
++++</p>
++++<h2>Calculate all D[i,j]</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;As stated earlier, the recurrence relation for the rest of the table is: </p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;D[i,j] = max { D[i-1,j-1]+ sim_mat[s[j],t[i]], D[i-1,j] + gap_score, 
++++D[i,j-1] + gap_score }; </p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;1 If the highest score comes from the element D[i-1,j-1] then 
++++characters s[i] and t[j] match.</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;2 If the highest score comes from the element D[i-1,j] then 
++++a gap in string s is matched with a character in string t.</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;3 If the highest score comes from the element D[i,j-1] then 
++++a gap in string t is matched with a character in string s.</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;Loop over i and j and calculate the values for
++++the 3 possibilities and then assign the maximum value to D[i,j].
++++Once the table is filled in, the score of the Global alignment is in
++++matrix element D[m + 1,n + 1];</p>
++++<font color="#00AA00"><pre>
++++for i from 2 to m + 1 do
++++  for j from 2 to n + 1 do
++++    match := D[i-1,j-1] + sim_mat[BToInt(s[j-1]),BToInt(t[i-1])];
++++    gaps := D[i,j-1] + gap_score;
++++    gapt := D[i-1,j] + gap_score;
++++    D[i,j] := max(match,gaps,gapt);
++++  od;
++++od;
++++</pre>
++++</font><font color="#FF0000"><pre></pre>
++++</font><font color="#00AA00"><pre>print(D);</pre>
++++</font><font color="#FF0000"><pre>   0  -2  -4  -6  -8 -10 -12 -14
++++  -2  -1   0  -2  -4  -6  -8 -10
++++  -4  -3   1  -1  -3  -3  -5  -7
++++  -6  -5  -1   0  -2  -1  -3  -5
++++  -8  -4  -3   0   1  -1   1  -1
++++ -10  -6  -5  -2   1   0   1   2
++++ -12  -8  -7  -3   0   0   1   3
++++</pre>
++++</font><font color="#00AA00"><pre>score := D[m+1,n+1];</pre>
++++</font><font color="#FF0000"><pre>score := 3
++++</pre>
++++</font><h2>Do the Traceback to create the alignment</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;To create the traceback, reconstruct the path from position D[m+1,n+1]
++++to D[1,1] that led to the highest score.</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;
++++Start at matrix element D[m + 1,n + 1] which contains the best score of
++++the global alignment. Initialize two variable s_aln and t_aln to 
++++empty strings and then concatenate the aligned characters to the beginning of the 
++++string as we do the traceback. The characters are concatenated to the beginning because 
++++we start at the end of the strings, element D[m+1,n+1], and work 
++++backwards through the strings to the starting element D[1,1].
++++It is possible that there is not one unique path backwards through the scoring
++++matrix, i.e. some of the highest scores for matching two substrings, s[j]
++++and t[i], could have come from more than one matrix element.
++++Only one arbitrary path of the set of possible paths that led to the highest
++++score is traced back through the D matrix.  Although, other equivalent paths may 
++++exist only one is returned. </p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;Assign variables.</p>
++++<font color="#00AA00"><pre>i := m + 1; j := n + 1; </pre>
++++</font><font color="#FF0000"><pre>i := 7
++++j := 8
++++</pre>
++++</font><p>&nbsp;&nbsp;&nbsp;&nbsp;Assign empty strings to hold the final alignment.</p>
++++<font color="#00AA00"><pre>t_aln := '': s_aln := '': </pre>
++++</font><font color="#FF0000"><pre></pre>
++++</font><p>&nbsp;&nbsp;&nbsp;&nbsp;To traceback the path that led to the optimal score, we
++++start at the end, matrix element D[m,n] and redo the calculations
++++in the backwards direction to find out from where we came.  In
++++other words, from box D[i,j] we recalculate the scores in boxes 
++++D[i-1,j-1], D[i-1,j], and D[i,j-1].  By doing this we can reconstruct
++++the path from which we came. If we came from the D[i-1,j-1] then 
++++we add the next character from s and t to s_aln and t_aln.  If
++++we came from D[i,j-1] then we add a gap to t_aln and the next character
++++in s to s_aln. If we came from D[i-1,j], then we will add a gap to 
++++s_lan and the next character in t to t_aln.   As this loop is
++++written, our priority is to take the path through the diagonal
++++first (if it exists).  Adding a gap to t second priority and 
++++adding a gap to s third.
++++Again, this choice of priority is completely arbitrary.</p>
++++<font color="#00AA00"><pre>
++++while i &gt; 1 and j &gt; 1 do
++++  if D[i,j] - sim_mat[BToInt(s[j-1]),BToInt(t[i-1])] = D[i-1,j-1] then
++++    t_aln := t[i-1].t_aln:
++++    s_aln := s[j-1].s_aln:
++++    i := i-1: j := j-1:
++++  elif D[i,j] - gap_score = D[i,j-1] then
++++    s_aln := s[j-1].s_aln:
++++    t_aln := '_'.t_aln:
++++    j := j-1:
++++  elif D[i,j] - gap_score = D[i-1,j] then
++++    s_aln := '_'.s_aln:
++++    t_aln := t[i-1].t_aln:
++++    i := i-1:
++++  else
++++    error('should not happen'):
++++  fi:
++++od: 
++++</pre>
++++</font><font color="#FF0000"><pre></pre>
++++</font><p>&nbsp;&nbsp;&nbsp;&nbsp;At this point either i or j (or both) should be one.  Finish 
++++to the ends by adding gaps and the rest of the 
++++remaining string until both counters, i and j, are equal to one.</p>
++++<font color="#00AA00"><pre>
++++if j &gt; 1 then  
++++  while j &gt; 1 do
++++    s_aln := s[j-1].s_aln:
++++    t_aln := '_'.t_aln:
++++    j := j-1; od;
++++elif i &gt; 1 then 
++++  while i &gt; 1 do
++++    s_aln := '_'.s_aln;
++++    t_aln := t[i-1].t_aln;
++++    i := i-1; od;
++++fi;
++++</pre>
++++</font><font color="#FF0000"><pre></pre>
++++</font><p>&nbsp;&nbsp;&nbsp;&nbsp;Print the alignment.</p>
++++<font color="#00AA00"><pre>printf('%s\n%s\n',s_aln,t_aln);</pre>
++++</font><font color="#FF0000"><pre>ACGGTAG
++++CCTA_AG
++++</pre>
++++</font><p>&nbsp;&nbsp;&nbsp;&nbsp;For a local alignment, negative scores are not allowed. 
++++For this reason the first row and column are filled with zeros 
++++and if a negative number is the maximum score for a D[i,j] 
++++then it is replaced by a zero.  At the end, the traceback is done
++++from the highest score backwards until the first zero is reached.</p>
++++<p>&nbsp;&nbsp;&nbsp;&nbsp;For a global alignment with cost free end gaps, the
++++base condition is that each element in the first row and column 
++++is assigned the value zero, then
++++the scores are computed as in the global alignment but the traceback
++++is done from the highest score in the last row or column backwards
++++to the first row or column.</p>
++++<p>&copy; 2005 by Gina Cannarozzi, Informatik, ETH Zurich</p>
++++<p><a href="http://www.biorecipes.com/">Index of bio-recipes</a></p>
++++<p>Last updated on Fri Sep  2 16:54:18 2005 by <a href="http://www.cannarozzi.com/">gina</a></p>
++++</BODY></HTML>
++++
+++diff -r 8407b05deb24 -r fa36f5ce63a1 test.c
+++--- a/test.c	Fri Oct 15 04:20:53 2010 -0700
++++++ b/test.c	Fri Oct 15 06:15:42 2010 -0700
+++@@ -1,8 +1,9 @@
++++#include <stdio.h>
+++ #include "Reader.h"
+++ #include "bstrlib.h"
+++ 
+++ int main()
+++ {
+++-    alignStrings(bfromcstr("ACGGTAG"), bfromcstr("CCTAAG"));
++++    alignStrings(bfromcstr("<head><title>Something else</title></head>"), bfromcstr("<head><title>Title</title></head>"));
+++     return 0;
+++ }

@@ -3,6 +3,7 @@ Bugs
 
 1. There is a bug where the ends of longer lines aren't HTML escaped. If there is HTML in there it might cause the rest of the line to not display properly. See the bottom of the output for bug1.diff.
 
+2. When the content of a diff is another diff, things get ugly. See output of bug2.diff and bug2a.diff.
 
 
 Highlighting examples
