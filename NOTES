@@ -1,0 +1,70 @@
+This is a sentence.                              |This is also a sentence.
+-------------------------------------------------|--------XXXXX-------------------------------------
+
+
+This is a sentence.                              |This is a sentence too.
+-------------------------------------------------|------------------XXXX--------------------------
+
+
+This is a sentence.                              |The thing is, this is a sentence.
+-------------------------------------------------|--XXXXXXXXXXXXXX-----------------------------------------------
+
+
+This is a sentence.                              |This is a phrase.
+----------XXXXXXX--------------------------------|----------XXXXX---------------------------
+
+
+Which is better?
+
+This one has:
+  3 groups (fewer is better)
+  6 letters (fewer is better)
+  1 small gap (fewer is better)
+  1 group of 1
+
+This is a sentence.                              |This is a tent.
+----------XXX---XX-------------------------------|-------------X---------------------------
+
+This one has:
+  2 groups (better)
+ 12 letters (worse)
+
+This is a sentence.                              |This is a tent.
+----------XXXXXXXX-------------------------------|----------XXXX---------------------------
+
+
+Which is better?
+
+This one has:
+  3 groups
+ 14 letter
+  1 small gap
+  1 group of 1
+
+This is a sentence.                              |This is a fenced in area.
+----------XXXX-----------------------------------|----------X----XXXXXXXXX-------------------------
+
+This one has:
+  2 groups
+ 22 letters
+
+This is a sentence.                              |This is a fenced in area.
+----------XXXXXXXX-------------------------------|----------XXXXXXXXXXXXXX-------------------------
+
+
+Which is better?
+
+This one has:
+  3 groups
+  8 letters
+  1 group of 1
+
+This is a sentence.                              |3) This is a scent.
+--------------XXXX-------------------------------|XXX-----------X------------------------------
+
+This one has:
+  3 groups
+ 14 letters
+
+This is a sentence.                              |3) This is a scent.
+-----------XXXXXXX-------------------------------|XXX-----------XXXX---------------------------

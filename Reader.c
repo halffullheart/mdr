@@ -514,3 +514,76 @@ void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
 {
     sscanf(bstr2cstr(infoString, ' '), "@@ -%d,%*d +%d,%*d", lineNoL, lineNoR);
 }
+
+bstring alignStrings(bstring s, bstring t)
+{
+    int n = s->slen;
+    int m = t->slen;
+
+    int ** D;
+    int i, j;
+
+    int gapScore = -2;
+
+    // Allocate pointer memory for the first dimension of the matrix.
+    D = malloc((n + 1) * sizeof(int *));
+    if (D == NULL)
+    {
+        free(D);
+        printf("Memory allocation error.\n");
+        exit(-1);
+    }
+
+    // Allocate integer memory for the second dimension of the matrix.
+    for (i = 0; i < (n + 1); i++)
+    {
+        D[i] = malloc(n * sizeof(int));
+        if (D[i] == NULL)
+        {
+            free(D[i]);
+            printf("Memory allocation error.\n");
+            exit(-1);
+        }
+    }
+
+    // Initialize matrix to be filled with 0's.
+    for (j = 0; j < (m + 1); j++)
+    {
+        for(i = 0; i < (n + 1); i++)
+        {
+            D[i][j] = 0;
+        }
+    }
+
+    // Calculate values for first row.
+    for (j = 0; j < n; j++)
+    {
+        D[0][j + 1] = gapScore * j;
+    }
+
+    // Calculate values for first column.
+    for (i = 0; i < m; i++)
+    {
+        D[i + 1][0] = gapScore * i;
+    }
+
+
+    // Print matrix for testing.
+    for (j = 0; j < (m + 1); j++)
+    {
+        for(i = 0; i < (n + 1); i++)
+        {
+            printf(" %i ", D[i][j]);
+        }
+        printf("\n");
+    }
+
+    // Deallocate matrix memory.
+    for (i = 0; i < (n + 1); i++)
+    {
+        free(D[i]);
+    }
+    free(D);
+
+    return bfromcstr("no-op");
+}
