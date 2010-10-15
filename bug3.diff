@@ -1,0 +1,12 @@
+diff -r a91bd898c8a4 NOTES
+--- a/NOTES	Thu Oct 14 23:33:06 2010 -0700
++++ b/NOTES	Thu Oct 14 23:36:35 2010 -0700
+@@ -5,6 +5,8 @@
+ 
+ 2. When the content of a diff is another diff, things get ugly. See output of bug2.diff and bug2a.diff.
+ 
++3. All the &nbsp;'s in there are messing up the alignment. Long lines sometimes don't break. Also if one side has longer lines with this issue then the whole display is lopsided. Verify by being able to make window smaller without having to scroll left to right.
++
+ 
+ Highlighting examples
+ =====================
