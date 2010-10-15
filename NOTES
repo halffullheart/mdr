@@ -1,7 +1,7 @@
 Bugs
 ====
 
-* There is a bug where the ends of longer lines aren't HTML escaped. If there is HTML in there it might cause the rest of the line to not display properly.
+1. There is a bug where the ends of longer lines aren't HTML escaped. If there is HTML in there it might cause the rest of the line to not display properly. See the bottom of the output for bug1.diff.
 
 
 
