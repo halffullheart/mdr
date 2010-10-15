@@ -520,13 +520,17 @@ bstring alignStrings(bstring s, bstring t)
     int n = s->slen;
     int m = t->slen;
 
+    int cols = n + 1;
+    int rows = m + 1;
+
     int ** D;
     int i, j;
+    int x, y;
 
     int gapScore = -2;
 
     // Allocate pointer memory for the first dimension of the matrix.
-    D = malloc((n + 1) * sizeof(int *));
+    D = malloc(rows * sizeof(int *));
     if (D == NULL)
     {
         free(D);
@@ -535,53 +539,51 @@ bstring alignStrings(bstring s, bstring t)
     }
 
     // Allocate integer memory for the second dimension of the matrix.
-    for (i = 0; i < (n + 1); i++)
+    for (x = 0; x < rows; x++)
     {
-        D[i] = malloc(n * sizeof(int));
-        if (D[i] == NULL)
+        D[x] = malloc(cols * sizeof(int));
+        if (D[x] == NULL)
         {
-            free(D[i]);
+            free(D[x]);
             printf("Memory allocation error.\n");
             exit(-1);
         }
     }
 
     // Initialize matrix to be filled with 0's.
-    for (j = 0; j < (m + 1); j++)
+    for (x = 0; x < rows; x++)
     {
-        for(i = 0; i < (n + 1); i++)
+        for(y = 0; y < cols; y++)
         {
-            D[i][j] = 0;
+            D[x][y] = 0;
         }
     }
 
-    // Calculate values for first row.
-    for (j = 0; j < n; j++)
+    for (j = 0; j <= n; j++)
     {
-        D[0][j + 1] = gapScore * j;
+        D[0][j] = gapScore * j;
     }
 
-    // Calculate values for first column.
-    for (i = 0; i < m; i++)
+    for (i = 0; i <= m; i++)
     {
-        D[i + 1][0] = gapScore * i;
+        D[i][0] = gapScore * i;
     }
 
 
     // Print matrix for testing.
-    for (j = 0; j < (m + 1); j++)
+    for (x = 0; x < rows; x++)
     {
-        for(i = 0; i < (n + 1); i++)
+        for (y = 0; y < cols ; y++)
         {
-            printf(" %i ", D[i][j]);
+            printf(" %i ", D[x][y]);
         }
         printf("\n");
     }
 
     // Deallocate matrix memory.
-    for (i = 0; i < (n + 1); i++)
+    for (x = 0; x < cols; x++)
     {
-        free(D[i]);
+        free(D[x]);
     }
     free(D);
 
