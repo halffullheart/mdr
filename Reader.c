@@ -115,7 +115,16 @@ char * getHTML()
             else if (bisstemeqblk(inputLines->entry[i], lineInfoId, 3) == 1)
             {
                 syncLineNumbers(inputLines->entry[i], &lineNoL, &lineNoR);
-                if (!firstInfoLine)
+                if (firstInfoLine)
+                {
+                    // Don't print the info row but still increment the line
+                    // numbers normally.
+                    // TODO: Might be better to mark the row as the first and
+                    // hide it with CSS instead of just not printing it.
+                    lineNoL++;
+                    lineNoR++;
+                }
+                else
                 {
                     type = INFO;
                     useR = 1;
