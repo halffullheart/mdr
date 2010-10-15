@@ -13,7 +13,8 @@ if Config::CONFIG['target_os'] == 'mac' # TODO: Verrify 'mac' is correct
 end
 
 if Config::CONFIG['target_os'] == 'mingw32'
-    file 'mdr' => ['win/MakeDiffReadable.c', 'Reader.o', 'bstrlib.o'] do
+    task :mdr => 'mdr.exe'
+    file 'mdr.exe' => ['win/MakeDiffReadable.c', 'Reader.o', 'bstrlib.o'] do
       sh 'gcc -Wall -g bstrlib.o Reader.o win/MakeDiffReadable.c -o mdr'
     end
 end
