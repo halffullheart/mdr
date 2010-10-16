@@ -538,6 +538,8 @@ void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
 
 void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB)
 {
+    char gapChar = '_';
+
     bstring copyA = bstrcpy(a);
     bstring copyB = bstrcpy(b);
 
@@ -580,13 +582,13 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
         }
         // TODO: REALLY need to use something other than underscores at some
         // point.  Maybe null character?
-        else if (a->data[i] == '_')
+        else if (a->data[i] == gapChar)
         {
             // A has a gap - only add to mask for B
             maskB[posB] = DIFFERENT;
             posB++;
         }
-        else if (b->data[i] == '_')
+        else if (b->data[i] == gapChar)
         {
             // B has a gap - only add to mask for A
             maskA[posA] = DIFFERENT;
@@ -617,6 +619,27 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
  * sequences of DNA base pairs */
 void alignStrings(bstring s, bstring t)
 {
+    char gapChar = '_';
+
+    // Handle if one or both strings are empty.
+    if (s->slen == 0 && t->slen == 0)
+    {
+        // If both are empty, no-op
+        return;
+    }
+    else if (s->slen == 0)
+    {
+        binsertch(s, 0, t->slen, gapChar);
+        return;
+    }
+    else if (t->slen == 0)
+    {
+        binsertch(t, 0, s->slen, gapChar);
+        return;
+    }
+
+    // Regularly scheduled programming...
+
     int n = s->slen;
     int m = t->slen;
 
@@ -716,14 +739,14 @@ void alignStrings(bstring s, bstring t)
         {
             // Gap in t/right
             binsertch(sAlign, 0, 1, s->data[j-1]);
-            binsertch(tAlign, 0, 1, '_');
+            binsertch(tAlign, 0, 1, gapChar);
             j--;
         }
         else if (D[i][j] - gapScore == D[i-1][j])
         {
             // Gap in s/left
             binsertch(tAlign, 0, 1, t->data[i-1]);
-            binsertch(sAlign, 0, 1, '_');
+            binsertch(sAlign, 0, 1, gapChar);
             i--;
         }
         else
@@ -761,7 +784,7 @@ void alignStrings(bstring s, bstring t)
     }
     free(D);
 
-    printf("Alignment:\n%s\n%s\n", bdata(sAlign), bdata(tAlign));
+    printf("Alignment: %i, %i\n%sEND\n%sEND\n", s->slen, t->slen, bdata(sAlign), bdata(tAlign));
 
     bassign(s, sAlign);
     bassign(t, tAlign);
