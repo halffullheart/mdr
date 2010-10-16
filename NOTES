@@ -1,15 +1,3 @@
-Bugs
-====
-
-1. There is a bug where the ends of longer lines aren't HTML escaped. If there is HTML in there it might cause the rest of the line to not display properly. See the bottom of the output for bug1.diff.
-
-2. When the content of a diff is another diff, things get ugly. See output of bug2.diff and bug2a.diff.
-
-3. [FIXED] All the &nbsp;'s in there are messing up the alignment. Long lines sometimes don't break. Also if one side has longer lines with this issue then the whole display is lopsided. Verify by being able to make window smaller without having to scroll left to right.
-
-4. Make sure all instances of malloc() are checked for errors.
-
-
 Highlighting examples
 =====================
 
