@@ -406,8 +406,11 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
                 // If we've reached the end of the mask then this is the longer
                 // line and the rest of it should be marked as different (or
                 // continue to be).
-                if (lastState == 0) binsert(content, position, bfromcstr("<em>"), ' ');
-                position += 4;
+                if (lastState == SAME)
+                {
+                    binsert(content, position, bfromcstr("<em>"), ' ');
+                    position += 4;
+                }
                 needToCloseLastHighlightBeforeEscapingHTML = TRUE;
                 break;
             }
