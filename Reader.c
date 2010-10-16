@@ -389,13 +389,12 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
     // Remove diff formatting from beginning of line.
     content = bmidstr(content, lineMap.padding, content->slen);
 
-    // Prep for HTML display
-    if (content->slen == 0) bcatcstr(content, "&nbsp;");
+    int position = 0;
+    int needToCloseLastHighlightBeforeEscapingHTML = FALSE;
 
     if (highlightMask != NULL)
     {
         enum highlightMaskValue lastState = SAME;
-        int position = 0;
         int advanceBy;
         int i;
         for (i = lineMap.padding; i < content->slen; i++)
@@ -409,10 +408,7 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
                 // continue to be).
                 if (lastState == 0) binsert(content, position, bfromcstr("<em>"), ' ');
                 position += 4;
-                bfindreplace(content, bfromcstr(" "), bfromcstr("&nbsp;"), position);
-                bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), position);
-                bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), position);
-                bcatcstr(content, "</em>");
+                needToCloseLastHighlightBeforeEscapingHTML = TRUE;
                 break;
             }
 
@@ -429,7 +425,7 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
             }
             if (content->data[position] == ' ')
             {
-                breplace(content, position, 1, bfromcstr("&nbsp;"), ' ');
+                breplace(content, position, 1, bfromcstr("&emsp;"), ' ');
                 advanceBy += 5;
             }
 
@@ -451,11 +447,20 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
             lastState = highlightMask[i];
         }
     }
-    else
+
+    // Escape HTML.
+    // TODO: This can't possibly be good enough.
+    bfindreplace(content, bfromcstr("&"), bfromcstr("&amp;"), position);
+    bfindreplace(content, bfromcstr(" "), bfromcstr("&emsp;"), position);
+    bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), position);
+    bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), position);
+
+    // Put something in blank lines.
+    if (content->slen == 0) bcatcstr(content, "&emsp;");
+
+    if (needToCloseLastHighlightBeforeEscapingHTML)
     {
-        bfindreplace(content, bfromcstr(" "), bfromcstr("&nbsp;"), 0);
-        bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), 0);
-        bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), 0);
+        bcatcstr(content, "</em>");
     }
 
     // TODO: there's a lot of string manipulation going on here. It might be
@@ -484,7 +489,7 @@ void createLine(bstring base, bstring content, lineData lineMap, enum highlightM
 
 void createEmptyLine(bstring base)
 {
-    bcatcstr(base, "<td class='line_number'>&nbsp;</td><td class='line empty'>&nbsp;</td>\n");
+    bcatcstr(base, "<td class='line_number'>&emsp;</td><td class='line empty'>&emsp;</td>\n");
 }
 
 char * typeString(enum lineType type)
@@ -509,7 +514,7 @@ char * lineNumberString(int lineNo)
 {
     char * s = malloc(100 * sizeof(char));
     if (lineNo <= 0) {
-        strcpy(s, "&nbsp;");
+        strcpy(s, "&emsp;");
     } else {
         snprintf(s, 100, "%i", lineNo);
     }
