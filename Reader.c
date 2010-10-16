@@ -657,6 +657,9 @@ bstring alignStrings(bstring s, bstring t)
 
     printf("Alignment:\n%s\n%s\n", bdata(sAlign), bdata(tAlign));
 
+    bdestroy(sAlign);
+    bdestroy(tAlign);
+
     // Deallocate matrix memory.
     for (x = 0; x < rows; x++)
     {
