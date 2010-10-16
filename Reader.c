@@ -8,6 +8,11 @@ enum bool {
     TRUE = 1
 };
 
+enum side {
+    RIGHT,
+    LEFT
+};
+
 enum lineType {
     SHARED,
     OLD,
@@ -22,8 +27,7 @@ enum lineType {
 
 enum highlightMaskValue {
     SAME,
-    DIFFERENT,
-    END_MASK
+    DIFFERENT
 };
 
 typedef struct {
@@ -36,7 +40,7 @@ typedef struct {
 
 char * getHTMLHead();
 
-void createLine(bstring base, bstring content, lineData lineMap, enum highlightMaskValue * highlightMask);
+void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask);
 
 void createEmptyLine(bstring base);
 
@@ -45,6 +49,10 @@ char * typeString(enum lineType type);
 char * lineNumberString(int lineNo);
 
 void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
+
+void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB);
+
+void alignStrings(bstring s, bstring t);
 
 int charSimilarity(char a, char b);
 
@@ -233,17 +241,20 @@ char * getHTML()
         // Now we do the formatting work based on the map.
         for (i = 0; i < lineMapPosL; i++)
         {
-            bstring inputLineL;
-            bstring inputLineR;
+            int * highlightMaskA = NULL;
+            int * highlightMaskB = NULL;
+            bstring contentL;
+            bstring contentR;
 
-            enum highlightMaskValue * highlightMask = NULL;
-
-            if (lineMapL[i].type != EMPTY) {
-                inputLineL = inputLines->entry[lineMapL[i].inputPos];
+            // Remove diff formatting from beginning of line.
+            if (lineMapL[i].type != EMPTY)
+            {
+                contentL = bmidstr(inputLines->entry[lineMapL[i].inputPos], lineMapL[i].padding, 999999);
             }
 
-            if (lineMapR[i].type != EMPTY) {
-                inputLineR = inputLines->entry[lineMapR[i].inputPos];
+            if (lineMapR[i].type != EMPTY)
+            {
+                contentR = bmidstr(inputLines->entry[lineMapR[i].inputPos], lineMapR[i].padding, 999999);
             }
 
             // Compare changed lines
@@ -252,30 +263,13 @@ char * getHTML()
                 lineMapL[i].type = CHANGE;
                 lineMapR[i].type = CHANGE;
 
-                int shorterLineLen = (inputLineL->slen < inputLineR->slen) ? inputLineL->slen : inputLineR->slen;
-                int longerLineLen = (inputLineL->slen > inputLineR->slen) ? inputLineL->slen : inputLineR->slen;
+                determineLineHighlighting(
+                    contentL,
+                    contentR,
+                    &highlightMaskA,
+                    &highlightMaskB
+                );
 
-                highlightMask = malloc((longerLineLen + 1) * sizeof(int));
-                if (highlightMask == NULL)
-                {
-                    free(highlightMask);
-                    printf("Memory allocation error\n");
-                    exit(-1);
-                }
-
-                int j;
-                for (j = 0; j < shorterLineLen; j++)
-                {
-                    if (inputLineL->data[j] == inputLineR->data[j])
-                    {
-                        highlightMask[j] = SAME;
-                    }
-                    else
-                    {
-                        highlightMask[j] = DIFFERENT;
-                    }
-                }
-                highlightMask[j] = END_MASK;
             }
 
             // Format output
@@ -287,7 +281,8 @@ char * getHTML()
             }
             else
             {
-                createLine(html, inputLineL, lineMapL[i], highlightMask);
+                createLine(LEFT, html, contentL, lineMapL[i], highlightMaskA);
+                bdestroy(contentL);
             }
 
             if (lineMapR[i].type == EMPTY)
@@ -296,12 +291,14 @@ char * getHTML()
             }
             else
             {
-                createLine(html, inputLineR, lineMapR[i], highlightMask);
+                createLine(RIGHT, html, contentR, lineMapR[i], highlightMaskB);
+                bdestroy(contentR);
             }
 
             bcatcstr(html, "</tr>\n");
 
-            if (highlightMask != NULL) free(highlightMask);
+            free(highlightMaskA);
+            free(highlightMaskB);
         }
 
         bcatcstr(html, "</table>\n</body>\n</html>\n");
@@ -393,56 +390,44 @@ char * getHTMLHead()
         "</head>\n";
 }
 
-void createLine(bstring base, bstring content, lineData lineMap, enum highlightMaskValue * highlightMask)
+void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask)
 {
     if (lineMap.type == INFO)
     {
         content = bfromcstr("");
         lineMap.lineNo = 0;
-        lineMap.padding = 0;
     }
-
-    // Remove diff formatting from beginning of line.
-    content = bmidstr(content, lineMap.padding, content->slen);
 
     int position = 0;
     int needToCloseLastHighlightBeforeEscapingHTML = FALSE;
 
     if (highlightMask != NULL)
     {
-        enum highlightMaskValue lastState = SAME;
+        int lastState = SAME;
         int advanceBy;
         int i;
-        for (i = lineMap.padding; i < content->slen; i++)
+        int contentLen = content->slen; // Copy this because it will change as we work.
+        for (i = 0; i < contentLen; i++)
         {
             advanceBy = 1; // Normally advance by one char.
 
-            if (highlightMask[i] == END_MASK)
-            {
-                // If we've reached the end of the mask then this is the longer
-                // line and the rest of it should be marked as different (or
-                // continue to be).
-                if (lastState == SAME)
-                {
-                    binsert(content, position, bfromcstr("<em>"), ' ');
-                    position += 4;
-                }
-                needToCloseLastHighlightBeforeEscapingHTML = TRUE;
-                break;
-            }
-
             // Escape HTML as we go.
-            if (content->data[position] == '<')
+            if (content->data[position] == '&')
+            {
+                breplace(content, position, 1, bfromcstr("&amp;"), ' ');
+                advanceBy += 4;
+            }
+            else if (content->data[position] == '<')
             {
                 breplace(content, position, 1, bfromcstr("&lt;"), ' ');
                 advanceBy += 3;
             }
-            if (content->data[position] == '>')
+            else if (content->data[position] == '>')
             {
                 breplace(content, position, 1, bfromcstr("&gt;"), ' ');
                 advanceBy += 3;
             }
-            if (content->data[position] == ' ')
+            else if (content->data[position] == ' ')
             {
                 breplace(content, position, 1, bfromcstr("&emsp;"), ' ');
                 advanceBy += 5;
@@ -551,10 +536,86 @@ void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
     sscanf(bstr2cstr(infoString, ' '), "@@ -%d,%*d +%d,%*d", lineNoL, lineNoR);
 }
 
+void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB)
+{
+    bstring copyA = bstrcpy(a);
+    bstring copyB = bstrcpy(b);
+
+    alignStrings(a, b);
+
+    // Both strings should be the same length. We'll just get the length of
+    // one, which should be the upper limit for the masks.
+    int len = a->slen;
+
+    // Allocate memory for two integer masks.
+    int * maskA = malloc(len * sizeof(int));
+    if (maskA == NULL)
+    {
+        free(maskA);
+        printf("Memory allocation error.\n");
+        exit(-1);
+    }
+
+    int * maskB = malloc(len * sizeof(int));
+    if (maskB == NULL)
+    {
+        free(maskB);
+        printf("Memory allocation error.\n");
+        exit(-1);
+    }
+
+    int i; // Position along the aligned strings
+    // Positions in each mask
+    int posA = 0;
+    int posB = 0;
+    for (i = 0; i < len; i++)
+    {
+        if (a->data[i] == b->data[i])
+        {
+            // Characters at this positon are the same
+            maskA[posA] = SAME;
+            posA++;
+            maskB[posB] = SAME;
+            posB++;
+        }
+        // TODO: REALLY need to use something other than underscores at some
+        // point.  Maybe null character?
+        else if (a->data[i] == '_')
+        {
+            // A has a gap - only add to mask for B
+            maskB[posB] = DIFFERENT;
+            posB++;
+        }
+        else if (b->data[i] == '_')
+        {
+            // B has a gap - only add to mask for A
+            maskA[posA] = DIFFERENT;
+            posA++;
+        }
+        else
+        {
+            // Characters at this position are different
+            maskA[posA] = DIFFERENT;
+            posA++;
+            maskB[posB] = DIFFERENT;
+            posB++;
+        }
+    }
+
+    *maskPtrA = maskA;
+    *maskPtrB = maskB;
+
+    bassign(a, copyA);
+    bassign(b, copyB);
+
+    bdestroy(copyA);
+    bdestroy(copyB);
+}
+
 /* Align two strings using dynamic programming. Based on an algorithm
  * described at http://www.biorecipes.com/DynProgBasic/code.html for aligning
  * sequences of DNA base pairs */
-bstring alignStrings(bstring s, bstring t)
+void alignStrings(bstring s, bstring t)
 {
     int n = s->slen;
     int m = t->slen;
@@ -622,9 +683,7 @@ bstring alignStrings(bstring s, bstring t)
         }
     }
 
-    bstring sAlign = bfromcstralloc(max2(m, n), "");
-    bstring tAlign = bfromcstralloc(max2(m, n), "");
-
+    /*
     for (x = 0; x < rows; x++)
     {
         for (y = 0; y < cols ; y++)
@@ -633,13 +692,21 @@ bstring alignStrings(bstring s, bstring t)
         }
         printf("\n");
     }
+    */
+
+    // Trace back through the matrix to find where we came from (which
+    // represents the way to align the strings).
+    bstring sAlign = bfromcstralloc(max2(m, n), "");
+    bstring tAlign = bfromcstralloc(max2(m, n), "");
 
     i = m;
     j = n;
+
     while (i > 0 && j > 0)
     {
         if ((D[i][j] - charSimilarity(s->data[j-1], t->data[i-1])) == D[i-1][j-1])
         {
+            // Both chars
             binsertch(tAlign, 0, 1, t->data[i-1]);
             binsertch(sAlign, 0, 1, s->data[j-1]);
             i--;
@@ -647,12 +714,14 @@ bstring alignStrings(bstring s, bstring t)
         }
         else if (D[i][j] - gapScore == D[i][j-1])
         {
+            // Gap in t/right
             binsertch(sAlign, 0, 1, s->data[j-1]);
             binsertch(tAlign, 0, 1, '_');
             j--;
         }
         else if (D[i][j] - gapScore == D[i-1][j])
         {
+            // Gap in s/left
             binsertch(tAlign, 0, 1, t->data[i-1]);
             binsertch(sAlign, 0, 1, '_');
             i--;
@@ -660,6 +729,7 @@ bstring alignStrings(bstring s, bstring t)
         else
         {
             printf("<GOB>I've made a huge mistake.</GOB>\n");
+            exit(-1);
         }
     }
 
@@ -667,8 +737,9 @@ bstring alignStrings(bstring s, bstring t)
     {
         while (j > 0)
         {
+            // Gap in t/right
             binsertch(sAlign, 0, 1, s->data[j-1]);
-            binsertch(tAlign, 0, 1, '_');
+            binsertch(tAlign, 0, 1, '\0');
             j--;
         }
     }
@@ -676,16 +747,12 @@ bstring alignStrings(bstring s, bstring t)
     {
         while (i > 0)
         {
+            // Gap in s/left
             binsertch(tAlign, 0, 1, t->data[i-1]);
-            binsertch(sAlign, 0, 1, '_');
+            binsertch(sAlign, 0, 1, '\0');
             i--;
         }
     }
-
-    printf("Alignment:\n%s\n%s\n", bdata(sAlign), bdata(tAlign));
-
-    bdestroy(sAlign);
-    bdestroy(tAlign);
 
     // Deallocate matrix memory.
     for (x = 0; x < rows; x++)
@@ -694,7 +761,12 @@ bstring alignStrings(bstring s, bstring t)
     }
     free(D);
 
-    return bfromcstr("no-op");
+    printf("Alignment:\n%s\n%s\n", bdata(sAlign), bdata(tAlign));
+
+    bassign(s, sAlign);
+    bassign(t, tAlign);
+    bdestroy(sAlign);
+    bdestroy(tAlign);
 }
 
 int charSimilarity(char a, char b)
