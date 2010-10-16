@@ -76,7 +76,19 @@ char * getHTML()
         // allocate the left and right maps to be big enough to each hold all
         // the input data, which is more than enough.
         lineData * lineMapL = malloc(inputLines->qty * sizeof(lineData));
+        if (lineMapL == NULL)
+        {
+            free(lineMapL);
+            printf("Memory allocation error.\n");
+            exit(-1);
+        }
         lineData * lineMapR = malloc(inputLines->qty * sizeof(lineData));
+        if (lineMapR == NULL)
+        {
+            free(lineMapR);
+            printf("Memory allocation error.\n");
+            exit(-1);
+        }
         int lineMapPosL = 0;
         int lineMapPosR = 0;
 
@@ -215,9 +227,7 @@ char * getHTML()
         // same length.
         if (lineMapPosL != lineMapPosR)
         {
-            char * error = malloc(100 * sizeof(char));
-            snprintf(error, 100, "Columns not equal in length. L:%i R:%i\n", lineMapPosL, lineMapPosR);
-            return error; // Caller should free().
+            return "Error displaying diff (generated columns not equal in length).";
         }
 
         // Now we do the formatting work based on the map.
@@ -246,6 +256,12 @@ char * getHTML()
                 int longerLineLen = (inputLineL->slen > inputLineR->slen) ? inputLineL->slen : inputLineR->slen;
 
                 highlightMask = malloc((longerLineLen + 1) * sizeof(int));
+                if (highlightMask == NULL)
+                {
+                    free(highlightMask);
+                    printf("Memory allocation error\n");
+                    exit(-1);
+                }
 
                 int j;
                 for (j = 0; j < shorterLineLen; j++)
@@ -516,6 +532,12 @@ char * typeString(enum lineType type)
 char * lineNumberString(int lineNo)
 {
     char * s = malloc(100 * sizeof(char));
+    if (s == NULL)
+    {
+        free(s);
+        printf("Memory allocation error.\n");
+        exit(-1);
+    }
     if (lineNo <= 0) {
         strcpy(s, "&emsp;");
     } else {
