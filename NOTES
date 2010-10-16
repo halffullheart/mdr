@@ -7,6 +7,8 @@ Bugs
 
 3. [FIXED] All the &nbsp;'s in there are messing up the alignment. Long lines sometimes don't break. Also if one side has longer lines with this issue then the whole display is lopsided. Verify by being able to make window smaller without having to scroll left to right.
 
+4. Make sure all instances of malloc() are checked for errors.
+
 
 Highlighting examples
 =====================

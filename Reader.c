@@ -600,7 +600,6 @@ bstring alignStrings(bstring s, bstring t)
     bstring sAlign = bfromcstralloc(max2(m, n), "");
     bstring tAlign = bfromcstralloc(max2(m, n), "");
 
-    // Print matrix for testing.
     for (x = 0; x < rows; x++)
     {
         for (y = 0; y < cols ; y++)
@@ -614,7 +613,6 @@ bstring alignStrings(bstring s, bstring t)
     j = n;
     while (i > 0 && j > 0)
     {
-        //printf("i:%i j:%i\n", i, j);
         if ((D[i][j] - charSimilarity(s->data[j-1], t->data[i-1])) == D[i-1][j-1])
         {
             binsertch(tAlign, 0, 1, t->data[i-1]);
@@ -640,7 +638,6 @@ bstring alignStrings(bstring s, bstring t)
         }
     }
 
-    //printf("Last i:%i j:%i\n", i, j);
     if (j > 0)
     {
         while (j > 0)
