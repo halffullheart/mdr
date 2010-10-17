@@ -37,12 +37,17 @@ typedef struct {
     int inputPos;
     int padding;
     int lineNo;
+    int leadingSpaces;
 } lineData;
 
 
 char * getHTMLHead();
 
+bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpaces);
+
 void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask);
+
+bstring getWhitespace(int spaces);
 
 void createEmptyLine(bstring base);
 
@@ -219,6 +224,7 @@ char * getHTML()
                 lineMapL[lineMapPosL].type = type;
                 lineMapL[lineMapPosL].padding = padding;
                 lineMapL[lineMapPosL].lineNo = lineNoL - 1;
+                lineMapL[lineMapPosL].leadingSpaces = 0;
                 lineMapPosL++;
                 lineNoL++;
             }
@@ -229,6 +235,7 @@ char * getHTML()
                 lineMapR[lineMapPosR].type = type;
                 lineMapR[lineMapPosR].padding = padding;
                 lineMapR[lineMapPosR].lineNo = lineNoR - 1;
+                lineMapR[lineMapPosR].leadingSpaces = 0;
                 lineMapPosR++;
                 lineNoR++;
             }
@@ -249,16 +256,27 @@ char * getHTML()
             int * highlightMaskB = NULL;
             bstring contentL;
             bstring contentR;
+            int leadingSpacesL = 0;
+            int leadingSpacesR = 0;
 
-            // Remove diff formatting from beginning of line.
             if (lineMapL[i].type != EMPTY)
             {
-                contentL = bmidstr(inputLines->entry[lineMapL[i].inputPos], lineMapL[i].padding, 999999);
+                contentL = getContentFromLine(
+                    inputLines->entry[lineMapL[i].inputPos],
+                    lineMapL[i].padding,
+                    &leadingSpacesL
+                );
+                lineMapL[i].leadingSpaces = leadingSpacesL;
             }
 
             if (lineMapR[i].type != EMPTY)
             {
-                contentR = bmidstr(inputLines->entry[lineMapR[i].inputPos], lineMapR[i].padding, 999999);
+                contentR = getContentFromLine(
+                    inputLines->entry[lineMapR[i].inputPos],
+                    lineMapR[i].padding,
+                    &leadingSpacesR
+                );
+                lineMapR[i].leadingSpaces = leadingSpacesR;
             }
 
             // Compare changed lines
@@ -394,6 +412,20 @@ char * getHTMLHead()
         "</head>\n";
 }
 
+bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpaces)
+{
+    // Remove padding from front of string.
+    bstring content = bmidstr(line, formatPaddingLen, line->slen);
+    *leadingSpaces = 0;
+    // Remove and count leading whitespace.
+    while (content->slen > 0 && content->data[0] == ' ')
+    {
+        bdelete(content, 0, 1);
+        (*leadingSpaces)++;
+    }
+    return content;
+}
+
 void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask)
 {
     if (lineMap.type == INFO)
@@ -488,11 +520,26 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
     {
         bcatcstr(base, "<td colspan='2' class='line ");
     }
+    bstring whitespace;
+
     bcatcstr(base, typeString(lineMap.type));
     bcatcstr(base, "'>");
+    printf("Leading whitespace: %i\n", lineMap.leadingSpaces);
+    bconcat(base, whitespace = getWhitespace(lineMap.leadingSpaces));
     bconcat(base, content);
     bcatcstr(base, "</td>\n");
 
+    bdestroy(whitespace);
+}
+
+bstring getWhitespace(int spaces)
+{
+    bstring whitespace = bfromcstralloc(spaces * 6, "");
+    while (whitespace->slen < spaces * 6)
+    {
+        bcatcstr(whitespace, "&emsp;");
+    }
+    return whitespace;
 }
 
 void createEmptyLine(bstring base)
