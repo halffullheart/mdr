@@ -54,6 +54,8 @@ void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
 
 void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB);
 
+int compareStringPositions(bstring base, bstring comparison, int strPos, int * maskPos);
+
 void alignStrings(bstring s, bstring t);
 
 int charSimilarity(char a, char b);
@@ -547,7 +549,7 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     alignStrings(a, b);
 
     // Both strings should be the same length. We'll just get the length of
-    // one, which should be the upper limit for the masks.
+    // one, which should be the upper limit needed for the masks.
     int len = a->slen;
 
     // Allocate memory for two integer masks.
@@ -567,42 +569,14 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
         exit(-1);
     }
 
-    int i; // Position along the aligned strings
+    int i; // Position along the aligned strings.
     // Positions in each mask.
     int posA = 0;
     int posB = 0;
     for (i = 0; i < len; i++)
     {
-        if (a->data[i] == b->data[i])
-        {
-            // Characters at this positon are the same.
-            maskA[posA] = SAME;
-            posA++;
-            maskB[posB] = SAME;
-            posB++;
-        }
-        // TODO: REALLY need to use something other than underscores at some
-        // point.  Maybe null character?
-        else if (a->data[i] == GAP_CHAR)
-        {
-            // A has a gap - only add to mask for B.
-            maskB[posB] = DIFFERENT;
-            posB++;
-        }
-        else if (b->data[i] == GAP_CHAR)
-        {
-            // B has a gap - only add to mask for A.
-            maskA[posA] = DIFFERENT;
-            posA++;
-        }
-        else
-        {
-            // Characters at this position are different.
-            maskA[posA] = DIFFERENT;
-            posA++;
-            maskB[posB] = DIFFERENT;
-            posB++;
-        }
+        maskA[posA] = compareStringPositions(a, b, i, &posA);
+        maskB[posB] = compareStringPositions(b, a, i, &posB);
     }
 
     *maskPtrA = maskA;
@@ -613,6 +587,29 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
 
     bdestroy(copyA);
     bdestroy(copyB);
+}
+
+// Returns a value for the mask that belongs to the first string and increments
+// the position if that value is not null.
+int compareStringPositions(bstring base, bstring comparison, int strPos, int * maskPos)
+{
+    int result = -1;
+
+    if (base->data[strPos] == GAP_CHAR)
+    {
+        // no-op
+    }
+    else if (base->data[strPos] == comparison->data[strPos])
+    {
+        result = SAME;
+        (*maskPos)++;
+    }
+    else {
+        result = DIFFERENT;
+        (*maskPos)++;
+    }
+
+    return result;
 }
 
 /* Align two strings using dynamic programming. Based on an algorithm
@@ -650,7 +647,7 @@ void alignStrings(bstring s, bstring t)
     int i, j;
     int x, y;
 
-    int gapScore = -2;
+    int gapScore = 0;
 
     // Allocate pointer memory for the first dimension of the matrix.
     D = malloc(rows * sizeof(int *));
@@ -683,16 +680,20 @@ void alignStrings(bstring s, bstring t)
     }
 
     // Calculate values for first row.
+    /*
     for (j = 0; j <= n; j++)
     {
         D[0][j] = gapScore * j;
     }
+    */
 
     // Calculate values for first column.
+    /*
     for (i = 0; i <= m; i++)
     {
         D[i][0] = gapScore * i;
     }
+    */
 
     // Calculate inside of matrix.
     for (i = 1; i <= m; i++)
@@ -702,7 +703,8 @@ void alignStrings(bstring s, bstring t)
             int match = D[i-1][j-1] + charSimilarity(s->data[j-1], t->data[i-1]);
             int sGap = D[i][j-1] + gapScore;
             int tGap = D[i-1][j] + gapScore;
-            D[i][j] = max3(match, sGap, tGap);
+            int max = max3(match, sGap, tGap);
+            D[i][j] = (max > 0 ? max : 0);
         }
     }
 
@@ -796,7 +798,7 @@ void alignStrings(bstring s, bstring t)
 
 int charSimilarity(char a, char b)
 {
-    return (a == b) ? 2 : 1;
+    return (a == b) ? 2 : 0;
 }
 
 int max2(int a, int b)
