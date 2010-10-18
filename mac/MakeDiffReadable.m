@@ -20,12 +20,11 @@ int main (int argc, const char * argv[])
     pid_t pid = fork();
     if (pid == 0)
     {
-        // Child process
+        // Child process.
         setsid();
 
         [NSAutoreleasePool new];
         [NSApplication sharedApplication];
-        id appName = [[NSProcessInfo processInfo] processName];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
         [NSApp setDelegate:[MDRApplicationDelegate alloc]];
 
@@ -40,11 +39,12 @@ int main (int argc, const char * argv[])
                 autorelease];
 
         [window cascadeTopLeftFromPoint:NSMakePoint(200,200)];
-        [window setTitle:appName];
+        [window setTitle:@"mdr"];
         [window makeKeyAndOrderFront:nil];
         [window orderFrontRegardless];
 
         id webView = [[[WebView alloc] initWithFrame:rect] autorelease];
+        [webView setEditable:YES];
         [window setContentView:webView];
         [[webView mainFrame] loadHTMLString:webContent baseURL: nil];
 
@@ -55,7 +55,7 @@ int main (int argc, const char * argv[])
     }
     else
     {
-        // Parent process
+        // Parent process just quits after fork.
         return 0;
     }
 
