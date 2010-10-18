@@ -29,7 +29,8 @@ enum lineType {
 
 enum highlightMaskValue {
     SAME,
-    DIFFERENT
+    DIFFERENT,
+    GAP
 };
 
 typedef struct {
@@ -59,7 +60,7 @@ void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
 
 void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB);
 
-int compareStringPositions(bstring base, bstring comparison, int strPos, int * maskPos);
+int compareStringPositions(bstring base, bstring comparison, int strPos);
 
 void alignStrings(bstring s, bstring t);
 
@@ -524,7 +525,6 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
 
     bcatcstr(base, typeString(lineMap.type));
     bcatcstr(base, "'>");
-    printf("Leading whitespace: %i\n", lineMap.leadingSpaces);
     bconcat(base, whitespace = getWhitespace(lineMap.leadingSpaces));
     bconcat(base, content);
     bcatcstr(base, "</td>\n");
@@ -622,9 +622,38 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     int posB = 0;
     for (i = 0; i < len; i++)
     {
-        maskA[posA] = compareStringPositions(a, b, i, &posA);
-        maskB[posB] = compareStringPositions(b, a, i, &posB);
+        int currentComparisonA = compareStringPositions(a, b, i);
+        int currentComparisonB = compareStringPositions(b, a, i);
+        // Look ahead and back a place in the strings to see if we have an
+        // isolated matching character among differences.
+        if (currentComparisonA == SAME &&
+            i > 0 &&
+            i < len-1 &&
+            compareStringPositions(a, b, i-1) != SAME &&
+            compareStringPositions(a, b, i+1) != SAME)
+        {
+            // Pretend the matching characters are different to make the diff
+            // look more readable.
+            //printf("S");
+            if (currentComparisonA != GAP) currentComparisonA = DIFFERENT;
+            if (currentComparisonB != GAP) currentComparisonB = DIFFERENT;
+        }
+        else {
+            //printf("-");
+        }
+
+        if (currentComparisonA != GAP)
+        {
+            maskA[posA] = currentComparisonA;
+            posA++;
+        }
+        if (currentComparisonB != GAP)
+        {
+            maskB[posB] = currentComparisonB;
+            posB++;
+        }
     }
+    printf("\n");
 
     *maskPtrA = maskA;
     *maskPtrB = maskB;
@@ -636,11 +665,9 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     bdestroy(copyB);
 }
 
-// Returns a value for the mask that belongs to the first string and increments
-// the position if that value is not null.
-int compareStringPositions(bstring base, bstring comparison, int strPos, int * maskPos)
+int compareStringPositions(bstring base, bstring comparison, int strPos)
 {
-    int result = -1;
+    int result = GAP;
 
     if (base->data[strPos] == GAP_CHAR)
     {
@@ -649,15 +676,14 @@ int compareStringPositions(bstring base, bstring comparison, int strPos, int * m
     else if (base->data[strPos] == comparison->data[strPos])
     {
         result = SAME;
-        (*maskPos)++;
     }
     else {
         result = DIFFERENT;
-        (*maskPos)++;
     }
 
     return result;
 }
+
 
 /* Align two strings using dynamic programming. Based on an algorithm
  * described at http://www.biorecipes.com/DynProgBasic/code.html for aligning
@@ -837,7 +863,7 @@ void alignStrings(bstring s, bstring t)
     bassign(t, tAlign);
 
     // DEBUG
-    printf("\nAlignment(%i, %i):\n%s\n%s\n", s->slen, t->slen, bstr2cstr(sAlign, '_'), bstr2cstr(tAlign, '_'));
+    //printf("\nAlignment(%i, %i):\n%s\n%s\n", s->slen, t->slen, bstr2cstr(sAlign, '_'), bstr2cstr(tAlign, '_'));
 
     bdestroy(sAlign);
     bdestroy(tAlign);
