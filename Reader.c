@@ -653,7 +653,7 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
             posB++;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     *maskPtrA = maskA;
     *maskPtrB = maskB;
