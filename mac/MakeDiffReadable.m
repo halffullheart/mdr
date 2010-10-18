@@ -28,7 +28,7 @@ int main (int argc, const char * argv[])
         [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
         [NSApp setDelegate:[MDRApplicationDelegate alloc]];
 
-        NSString* webContent = [NSString stringWithCString:html encoding:NSASCIIStringEncoding];
+        NSString* webContent = [NSString stringWithCString:html encoding:NSUTF8StringEncoding];
         free(html);
 
         NSRect rect = NSMakeRect(0, 0, 1000, 500);
