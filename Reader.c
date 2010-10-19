@@ -70,6 +70,8 @@ int max2(int a, int b);
 
 int max3(int a, int b, int c);
 
+int editDistance(bstring a, bstring b);
+
 
 char * getHTML()
 {
@@ -746,7 +748,7 @@ void alignStrings(bstring s, bstring t)
     // Initialize matrix to be filled with 0's.
     for (x = 0; x < rows; x++)
     {
-        for(y = 0; y < cols; y++)
+        for (y = 0; y < cols; y++)
         {
             D[x][y] = 0;
         }
@@ -880,8 +882,92 @@ int max2(int a, int b)
     else return b;
 }
 
+int min2(int a, int b)
+{
+    if (a < b) return a;
+    else return b;
+}
+
 int max3(int a, int b, int c)
 {
     if (a > b) return max2(a, c);
     else return max2(b, c);
+}
+
+int min3(int a, int b, int c)
+{
+    if (a < b) return min2(a, c);
+    else return min2(b, c);
+}
+
+int editDistance(bstring s, bstring t)
+{
+    int m = s->slen;
+    int n = t->slen;
+
+    int rows = m + 1;
+    int cols = n + 1;
+
+    int ** D;
+    int i, j;
+
+    // Allocate pointer memory for the first dimension of the matrix.
+    D = malloc(rows * sizeof(int *));
+    if (D == NULL)
+    {
+        free(D);
+        printf("Memory allocation error.\n");
+        exit(-1);
+    }
+
+    // Allocate integer memory for the second dimension of the matrix.
+    for (i = 0; i < rows; i++)
+    {
+        D[i] = malloc(cols * sizeof(int));
+        if (D[i] == NULL)
+        {
+            free(D[i]);
+            printf("Memory allocation error.\n");
+            exit(-1);
+        }
+    }
+
+    // Initialize matrix to be filled with 0's.
+    for (i = 0; i < rows; i++)
+    {
+        for (j = 0; j < cols; j++)
+        {
+            D[i][j] = 0;
+        }
+    }
+
+    for (i = 0; i <= m; i++)
+    {
+        D[i][0] = i; // Deletion
+    }
+    for (j = 0; j <= n; j++)
+    {
+        D[0][j] = j; // Insertion
+    }
+
+    for (j = 1; j <= n; j++)
+    {
+        for (i = 1; i <= m; i++)
+        {
+            if (s->data[i-1] == t->data[j-1])
+            {
+                D[i][j] = D[i-1][j-1];
+            }
+            else
+            {
+                D[i][j] = min3(
+                    D[i-1][j] + 1, // Deletion
+                    D[i][j-1] + 1, // Insertion
+                    D[i-1][j-1] + 1  // Substitution
+                );
+            }
+        }
+    }
+
+    return D[m][n];
 }
