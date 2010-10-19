@@ -419,7 +419,8 @@ char * getHTMLHead()
         "      padding: 8px 5px 8px 12px;\n"
         "      font-size: 13px;\n"
         "      font-family: 'Lucida Grande', sans-serif;\n"
-        "      background: #f5f5f5;\n"
+        "      font-weight: bold;\n"
+        "      background: #eee;\n"
         "      color: #000;\n"
         "      border-top: 1px solid #fff;\n"
         "      border-right: 1px solid #ccc;\n"
@@ -564,7 +565,7 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
     if (lineMap.lineNo >= 0 && lineMap.type != INFO)
     {
         char * lineNo = lineNumberString(lineMap.lineNo);
-        bcatcstr(base, "<td class='line_number'>");
+        bcatcstr(base, "<td class='line_number' width='*'>");
         bcatcstr(base, lineNo);
         bcatcstr(base, "</td>\n");
         bcatcstr(base, "<td class='line ");
@@ -577,7 +578,7 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
     bstring whitespace;
 
     bcatcstr(base, typeString(lineMap.type));
-    bcatcstr(base, "'>");
+    bcatcstr(base, "' width='49%'>");
     bconcat(base, whitespace = getWhitespace(lineMap.leadingSpaces));
     bconcat(base, content);
     bcatcstr(base, "</td>\n");
