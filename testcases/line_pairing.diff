@@ -1,0 +1,146 @@
+diff -r aa8ca9ea8c02 Reader.c
+--- a/Reader.c	Sat Oct 16 06:22:54 2010 -0700
++++ b/Reader.c	Sat Oct 16 08:05:09 2010 -0700
+@@ -3,6 +3,8 @@
+ #include <string.h>
+ #include "bstrlib.h"
+ 
++#define GAP_CHAR '\0'
++
+ enum bool {
+     FALSE = 0,
+     TRUE = 1
+@@ -538,7 +540,6 @@
+ 
+ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB)
+ {
+-    char gapChar = '_';
+ 
+     bstring copyA = bstrcpy(a);
+     bstring copyB = bstrcpy(b);
+@@ -567,14 +568,14 @@
+     }
+ 
+     int i; // Position along the aligned strings
+-    // Positions in each mask
++    // Positions in each mask.
+     int posA = 0;
+     int posB = 0;
+     for (i = 0; i < len; i++)
+     {
+         if (a->data[i] == b->data[i])
+         {
+-            // Characters at this positon are the same
++            // Characters at this positon are the same.
+             maskA[posA] = SAME;
+             posA++;
+             maskB[posB] = SAME;
+@@ -582,21 +583,21 @@
+         }
+         // TODO: REALLY need to use something other than underscores at some
+         // point.  Maybe null character?
+-        else if (a->data[i] == gapChar)
++        else if (a->data[i] == GAP_CHAR)
+         {
+-            // A has a gap - only add to mask for B
++            // A has a gap - only add to mask for B.
+             maskB[posB] = DIFFERENT;
+             posB++;
+         }
+-        else if (b->data[i] == gapChar)
++        else if (b->data[i] == GAP_CHAR)
+         {
+-            // B has a gap - only add to mask for A
++            // B has a gap - only add to mask for A.
+             maskA[posA] = DIFFERENT;
+             posA++;
+         }
+         else
+         {
+-            // Characters at this position are different
++            // Characters at this position are different.
+             maskA[posA] = DIFFERENT;
+             posA++;
+             maskB[posB] = DIFFERENT;
+@@ -619,7 +620,6 @@
+  * sequences of DNA base pairs */
+ void alignStrings(bstring s, bstring t)
+ {
+-    char gapChar = '_';
+ 
+     // Handle if one or both strings are empty.
+     if (s->slen == 0 && t->slen == 0)
+@@ -629,12 +629,12 @@
+     }
+     else if (s->slen == 0)
+     {
+-        binsertch(s, 0, t->slen, gapChar);
++        binsertch(s, 0, t->slen, GAP_CHAR);
+         return;
+     }
+     else if (t->slen == 0)
+     {
+-        binsertch(t, 0, s->slen, gapChar);
++        binsertch(t, 0, s->slen, GAP_CHAR);
+         return;
+     }
+ 
+@@ -739,14 +739,14 @@
+         {
+             // Gap in t/right
+             binsertch(sAlign, 0, 1, s->data[j-1]);
+-            binsertch(tAlign, 0, 1, gapChar);
++            binsertch(tAlign, 0, 1, GAP_CHAR);
+             j--;
+         }
+         else if (D[i][j] - gapScore == D[i-1][j])
+         {
+             // Gap in s/left
+             binsertch(tAlign, 0, 1, t->data[i-1]);
+-            binsertch(sAlign, 0, 1, gapChar);
++            binsertch(sAlign, 0, 1, GAP_CHAR);
+             i--;
+         }
+         else
+@@ -762,7 +762,7 @@
+         {
+             // Gap in t/right
+             binsertch(sAlign, 0, 1, s->data[j-1]);
+-            binsertch(tAlign, 0, 1, '\0');
++            binsertch(tAlign, 0, 1, GAP_CHAR);
+             j--;
+         }
+     }
+@@ -772,7 +772,7 @@
+         {
+             // Gap in s/left
+             binsertch(tAlign, 0, 1, t->data[i-1]);
+-            binsertch(sAlign, 0, 1, '\0');
++            binsertch(sAlign, 0, 1, GAP_CHAR);
+             i--;
+         }
+     }
+@@ -784,18 +784,19 @@
+     }
+     free(D);
+ 
+-    printf("Alignment: %i, %i\n%sEND\n%sEND\n", s->slen, t->slen, bdata(sAlign), bdata(tAlign));
+-
+     bassign(s, sAlign);
+     bassign(t, tAlign);
++
++    // DEBUG
++    printf("\nAlignment(%i, %i):\n%s\n%s\n", s->slen, t->slen, bstr2cstr(sAlign, '_'), bstr2cstr(tAlign, '_'));
++
+     bdestroy(sAlign);
+     bdestroy(tAlign);
+ }
+ 
+ int charSimilarity(char a, char b)
+ {
+-    // For now, just give 2 pts for equality, everything else gets -1.
+-    return (a == b) ? 2 : -1;
++    return (a == b) ? 2 : 1;
+ }
+ 
+ int max2(int a, int b)
