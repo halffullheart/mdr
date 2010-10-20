@@ -5,6 +5,7 @@ CLOBBER.include('mdr')
 CLOBBER.include('mdr.exe')
 CLOBBER.include('release/mdr')
 CLEAN.include('*.o')
+CLEAN.include('*.css.h')
 
 task :default => 'build'
 task :build => 'mdr'
@@ -37,7 +38,7 @@ if Config::CONFIG['target_os'] == 'mingw32'
 
 end
 
-file 'Reader.o' => ['Reader.c'] do
+file 'Reader.o' => ['Reader.c', 'style.css.h'] do
   sh 'gcc -Wall -g -c Reader.c'
 end
 
@@ -48,4 +49,8 @@ end
 
 file 'test' => ['Reader.o', 'bstrlib.o', 'test.c'] do
   sh 'gcc -Wall -g bstrlib.o Reader.o test.c -o test'
+end
+
+file 'style.css.h' => 'css/style.css' do
+  sh 'cd css; xxd -i style.css > ../style.css.h'
 end

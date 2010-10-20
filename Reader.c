@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bstrlib.h"
+#include "style.css.h"
 
 #define GAP_CHAR '\0'
 
@@ -42,8 +43,6 @@ typedef struct {
 } lineData;
 
 
-char * getHTMLHead();
-
 bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpaces);
 
 void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask);
@@ -76,7 +75,13 @@ int editDistance(bstring a, bstring b);
 char * getHTML()
 {
     bstring html = bfromcstr("<!DOCTYPE html>\n<html>\n");
-    bcatcstr(html, getHTMLHead());
+    balloc(html, style_css_len);
+    bcatcstr(html, "<head>");
+    bcatcstr(html, "<title>mdr</title>");
+    bcatcstr(html, "<style type='text/css'>");
+    bcatcstr(html, (char *)style_css);
+    bcatcstr(html, "</style>");
+    bcatcstr(html, "</head>");
     bcatcstr(html, "<body>\n<table cellpadding='0'>\n");
 
     // Read from stdin
@@ -390,81 +395,6 @@ char * getHTML()
     bdestroy(html);
 
     return result; // Caller should free()
-}
-
-char * getHTMLHead()
-{
-    return
-       "<head>\n"
-        "  <title>mdr</title>\n"
-        "  <style type='text/css'>\n"
-        "    body {\n"
-        "      margin: 0;\n"
-        "      padding: 0;\n"
-        "      font-family: monospace;\n"
-        "      font-size: 13px;\n"
-        "    }\n"
-        "    table {\n"
-        "      width: 100%;\n"
-        "      border-collapse: collapse;\n"
-        "    }\n"
-        "    td {\n"
-        "      vertical-align: top;\n"
-        "    }\n"
-        "    .line {\n"
-        "      color: #888;\n"
-        "    }\n"
-        "    .line.new_file,\n"
-        "    .line.old_file {\n"
-        "      padding: 8px 5px 8px 12px;\n"
-        "      font-size: 13px;\n"
-        "      font-family: 'Lucida Grande', sans-serif;\n"
-        "      font-weight: bold;\n"
-        "      background: #eee;\n"
-        "      color: #000;\n"
-        "      border-top: 1px solid #fff;\n"
-        "      border-right: 1px solid #ccc;\n"
-        "      border-bottom: 1px solid #ccc;\n"
-        "      border-left: 1px solid #ccc;\n"
-        "    }\n"
-        "    .line.new {\n"
-        "      background: #a7ff92;\n"
-        "      color: #000;\n"
-        "    }\n"
-        "    .line.old {\n"
-        "      background: #c0bfff;\n"
-        "      color: #000;\n"
-        "    }\n"
-        "    .line.change {\n"
-        "      background: #9af2ed;\n"
-        "      color: #000;\n"
-        "    }\n"
-        "    .line.empty {\n"
-        "      background: #f5f5f5;\n"
-        "    }\n"
-        "    .line.info {\n"
-        "      height: 22px;\n"
-        "      background: #ddd;\n"
-        "      border-top: 1px solid #ccc;\n"
-        "      border-bottom: 1px solid #fff;\n"
-        "      border-left: 1px solid #ccc;\n"
-        "      font-size: 11px;\n"
-        "      text-align: center;\n"
-        "    }\n"
-        "    .line_number {\n"
-        "      padding: 0 5px;\n"
-        "      background: #eee;\n"
-        "      color: #888;\n"
-        "      text-align: right;\n"
-        "      border-right: 1px solid #ccc;\n"
-        "      border-left: 1px solid #ccc;\n"
-        "    }\n"
-        "    .line em {\n"
-        "      font-style: normal;\n"
-        "      background: #60d1cb;\n"
-        "    }\n"
-        "  </style>\n"
-        "</head>\n";
 }
 
 bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpaces)
