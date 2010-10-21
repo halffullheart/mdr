@@ -1,76 +1,14 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "Reader.h"
 #include "bstrlib.h"
 #include "style.css.h"
 
-#define GAP_CHAR '\0'
-
-enum bool {
-    FALSE = 0,
-    TRUE = 1
-};
-
-enum side {
-    RIGHT,
-    LEFT
-};
-
-enum lineType {
-    SHARED,
-    OLD,
-    NEW,
-    CHANGE,
-    EMPTY,
-    HEADER,
-    INFO,
-    OLD_FILE,
-    NEW_FILE
-};
-
-enum highlightMaskValue {
-    SAME,
-    DIFFERENT,
-    GAP
-};
-
-typedef struct {
-    enum lineType type;
-    int inputPos;
-    int padding;
-    int lineNo;
-    int leadingSpaces;
-} lineData;
-
-
-bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpaces);
-
-void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask);
-
-bstring getWhitespace(int spaces);
-
-void createEmptyLine(bstring base);
-
-char * typeString(enum lineType type);
-
-char * lineNumberString(int lineNo);
-
-void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
-
-void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB);
-
-int compareStringPositions(bstring base, bstring comparison, int strPos);
-
-void alignStrings(bstring s, bstring t);
-
-int charSimilarity(char a, char b);
-
-int max2(int a, int b);
-
-int max3(int a, int b, int c);
-
-int editDistance(bstring a, bstring b);
-
+#define GAP_VAL -1
+#define TRUE 1
+#define FALSE 0
 
 char * getHTML()
 {
@@ -128,7 +66,7 @@ char * getHTML()
         int padding;
         int lineNoL = 0;
         int lineNoR = 0;
-        enum bool firstInfoLine = TRUE;
+        int firstInfoLine = TRUE;
         int lastBalanceL = 0;
         int lastBalanceR = 0;
 
@@ -573,15 +511,19 @@ void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
 
 void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB)
 {
+    seq posAryA = initSeq(a->slen * 1.5);
+    seq posAryB = initSeq(b->slen * 1.5);
 
-    bstring copyA = bstrcpy(a);
-    bstring copyB = bstrcpy(b);
+    seq seqA = stringToSeq(a);
+    seq seqB = stringToSeq(b);
 
-    alignStrings(a, b);
+    determineAlignment(seqA, seqB, &compareChars, &posAryA, &posAryB);
 
-    // Both strings should be the same length. We'll just get the length of
+    assert(posAryA.alen == posAryB.alen);
+    int len = posAryA.alen;
+
+    // Both sequences should be the same length. We'll just get the length of
     // one, which should be the upper limit needed for the masks.
-    int len = a->slen;
 
     // Allocate memory for two integer masks.
     int * maskA = malloc(len * sizeof(int));
@@ -600,21 +542,24 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
         exit(-1);
     }
 
-    int i; // Position along the aligned strings.
+    int i; // Position along the aligned sequences.
+
     // Positions in each mask.
     int posA = 0;
     int posB = 0;
+
     for (i = 0; i < len; i++)
     {
-        int currentComparisonA = compareStringPositions(a, b, i);
-        int currentComparisonB = compareStringPositions(b, a, i);
+        int currentComparisonA = compareStringPositions(a, b, posAryA, posAryB, i);
+        int currentComparisonB = compareStringPositions(b, a, posAryB, posAryA, i);
+
         // Look ahead and back a place in the strings to see if we have an
         // isolated matching character among differences.
         if (currentComparisonA == SAME &&
             i > 0 &&
-            i < len-1 &&
-            compareStringPositions(a, b, i-1) != SAME &&
-            compareStringPositions(a, b, i+1) != SAME)
+            i < len - 1 &&
+            compareStringPositions(a, b, posAryA, posAryB, i - 1) != SAME &&
+            compareStringPositions(a, b, posAryA, posAryB, i + 1) != SAME)
         {
             // Pretend the matching characters are different to make the diff
             // look more readable.
@@ -642,22 +587,22 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     *maskPtrA = maskA;
     *maskPtrB = maskB;
 
-    bassign(a, copyA);
-    bassign(b, copyB);
+    freeSeq(&seqA);
+    freeSeq(&seqB);
 
-    bdestroy(copyA);
-    bdestroy(copyB);
+    freeSeq(&posAryA);
+    freeSeq(&posAryB);
 }
 
-int compareStringPositions(bstring base, bstring comparison, int strPos)
+int compareStringPositions(bstring a, bstring b, seq seqA, seq seqB, int i)
 {
     int result = GAP;
 
-    if (base->data[strPos] == GAP_CHAR)
+    if (seqA.val[i] == GAP_VAL)
     {
         // no-op
     }
-    else if (base->data[strPos] == comparison->data[strPos])
+    else if (a->data[seqA.val[i]] == b->data[seqB.val[i]])
     {
         result = SAME;
     }
@@ -672,30 +617,10 @@ int compareStringPositions(bstring base, bstring comparison, int strPos)
 /* Align two strings using dynamic programming. Based on an algorithm
  * described at http://www.biorecipes.com/DynProgBasic/code.html for aligning
  * sequences of DNA base pairs */
-void alignStrings(bstring s, bstring t)
+void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * posPtrS, seq * posPtrT)
 {
-
-    // Handle if one or both strings are empty.
-    if (s->slen == 0 && t->slen == 0)
-    {
-        // If both are empty, no-op
-        return;
-    }
-    else if (s->slen == 0)
-    {
-        binsertch(s, 0, t->slen, GAP_CHAR);
-        return;
-    }
-    else if (t->slen == 0)
-    {
-        binsertch(t, 0, s->slen, GAP_CHAR);
-        return;
-    }
-
-    // Regularly scheduled programming...
-
-    int n = s->slen;
-    int m = t->slen;
+    int n = s.alen;
+    int m = t.alen;
 
     int cols = n + 1;
     int rows = m + 1;
@@ -705,6 +630,44 @@ void alignStrings(bstring s, bstring t)
     int x, y;
 
     int gapScore = 0;
+
+    // Allocate memory for two integer arrays.
+    int aryMemLen = m + n;
+    seq posAryS = initSeq(aryMemLen);
+    seq posAryT = initSeq(aryMemLen);
+
+    int p;
+
+    // Handle if one or both strings are empty.
+    if (s.alen == 0 || t.alen == 0)
+    {
+        if (s.alen == 0)
+        {
+            // Fill S with gaps
+            for (p = 0; p < s.alen; p++) posAryS.val[p] = GAP_VAL;
+        }
+        else
+        {
+            // Fill S with normal mapping
+            for (p = 0; p < s.alen; p++) posAryS.val[p] = p;
+        }
+
+        if (t.alen == 0)
+        {
+            // Fill T with gaps
+            for (p = 0; p < t.alen; p++) posAryT.val[p] = GAP_VAL;
+        }
+        else
+        {
+            // Fill T with normal mapping
+            for (p = 0; p < t.alen; p++) posAryT.val[p] = p;
+        }
+
+        return;
+    }
+
+
+    // Regularly scheduled programming...
 
     // Allocate pointer memory for the first dimension of the matrix.
     D = malloc(rows * sizeof(int *));
@@ -757,7 +720,7 @@ void alignStrings(bstring s, bstring t)
     {
         for (j = 1; j <= n; j++)
         {
-            int match = D[i-1][j-1] + charSimilarity(s->data[j-1], t->data[i-1]);
+            int match = D[i-1][j-1] + compare(s, t, j-1, i-1);
             int sGap = D[i][j-1] + gapScore;
             int tGap = D[i-1][j] + gapScore;
             int max = max3(match, sGap, tGap);
@@ -778,34 +741,32 @@ void alignStrings(bstring s, bstring t)
 
     // Trace back through the matrix to find where we came from (which
     // represents the way to align the strings).
-    bstring sAlign = bfromcstralloc(max2(m, n), "");
-    bstring tAlign = bfromcstralloc(max2(m, n), "");
 
     i = m;
     j = n;
 
     while (i > 0 && j > 0)
     {
-        if ((D[i][j] - charSimilarity(s->data[j-1], t->data[i-1])) == D[i-1][j-1])
+        if ((D[i][j] - compare(s, t, j-1, i-1)) == D[i-1][j-1])
         {
             // Both chars
-            binsertch(tAlign, 0, 1, t->data[i-1]);
-            binsertch(sAlign, 0, 1, s->data[j-1]);
+            unshiftSeq(&posAryS, j - 1);
+            unshiftSeq(&posAryT, i - 1);
             i--;
             j--;
         }
         else if (D[i][j] - gapScore == D[i][j-1])
         {
             // Gap in t/right
-            binsertch(sAlign, 0, 1, s->data[j-1]);
-            binsertch(tAlign, 0, 1, GAP_CHAR);
+            unshiftSeq(&posAryS, j - 1);
+            unshiftSeq(&posAryT, GAP_VAL);
             j--;
         }
         else if (D[i][j] - gapScore == D[i-1][j])
         {
             // Gap in s/left
-            binsertch(tAlign, 0, 1, t->data[i-1]);
-            binsertch(sAlign, 0, 1, GAP_CHAR);
+            unshiftSeq(&posAryS, GAP_VAL);
+            unshiftSeq(&posAryT, i - 1);
             i--;
         }
         else
@@ -820,8 +781,8 @@ void alignStrings(bstring s, bstring t)
         while (j > 0)
         {
             // Gap in t/right
-            binsertch(sAlign, 0, 1, s->data[j-1]);
-            binsertch(tAlign, 0, 1, GAP_CHAR);
+            unshiftSeq(&posAryS, j - 1);
+            unshiftSeq(&posAryT, GAP_VAL);
             j--;
         }
     }
@@ -830,8 +791,8 @@ void alignStrings(bstring s, bstring t)
         while (i > 0)
         {
             // Gap in s/left
-            binsertch(tAlign, 0, 1, t->data[i-1]);
-            binsertch(sAlign, 0, 1, GAP_CHAR);
+            unshiftSeq(&posAryS, GAP_VAL);
+            unshiftSeq(&posAryT, i - 1);
             i--;
         }
     }
@@ -843,19 +804,21 @@ void alignStrings(bstring s, bstring t)
     }
     free(D);
 
-    bassign(s, sAlign);
-    bassign(t, tAlign);
+    *posPtrS = posAryS;
+    *posPtrT = posAryT;
 
     // DEBUG
     //printf("\nAlignment(%i, %i):\n%s\n%s\n", s->slen, t->slen, bstr2cstr(sAlign, '_'), bstr2cstr(tAlign, '_'));
-
-    bdestroy(sAlign);
-    bdestroy(tAlign);
 }
 
 int charSimilarity(char a, char b)
 {
     return (a == b) ? 2 : 0;
+}
+
+int compareChars(seq a, seq b, int ai, int bi)
+{
+    return (a.val[ai] == b.val[bi]) ? 2 : 0;
 }
 
 int max2(int a, int b)
@@ -961,4 +924,76 @@ int editDistance(bstring s, bstring t)
     free(D);
 
     return result;
+}
+
+seq initSeq(int size)
+{
+    seq s;
+
+    s.val = malloc(size * sizeof(int));
+    if (s.val == NULL)
+    {
+        free(s.val);
+        printf("Memory allocation error.\n");
+        exit(-1);
+    }
+
+    s.mlen = size;
+    s.alen = 0;
+
+    return s;
+}
+
+void setSeq(seq * s, int pos, int val)
+{
+    if (pos > (*s).mlen)
+    {
+        printf("Position out of seq bounds.\n");
+        exit(-1);
+    }
+
+    (*s).val[pos] = val;
+
+    if (pos >= (*s).alen)
+    {
+        (*s).alen = pos + 1;
+    }
+}
+
+void freeSeq(seq * s)
+{
+    free((*s).val);
+    (*s).mlen = 0;
+    (*s).alen = 0;
+}
+
+void unshiftSeq(seq * s, int i)
+{
+    if ((*s).alen == (*s).mlen)
+    {
+        printf("Seq out of memory.\n");
+        exit(-1);
+    }
+
+    (*s).alen++;
+
+    int x;
+    for (x = (*s).alen - 1; x > 0; x--)
+    {
+        (*s).val[x] = (*s).val[x - 1];
+    }
+    (*s).val[0] = i;
+}
+
+seq stringToSeq(bstring str)
+{
+    seq s = initSeq(str->slen);
+
+    int x;
+    for (x = 0; x < str->slen; x++)
+    {
+        setSeq(&s, x, (int)str->data[x]);
+    }
+
+    return s;
 }
