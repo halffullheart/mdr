@@ -58,7 +58,7 @@ void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
 
 void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB);
 
-int compareStringPositions(bstring, bstring, seq, seq, int);
+int compareStringPositions(seq, seq, int);
 
 void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * posPtrS, seq * posPtrT);
 

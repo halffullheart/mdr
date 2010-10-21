@@ -511,16 +511,16 @@ void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
 
 void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB)
 {
-    seq posAryA = initSeq(a->slen * 1.5);
-    seq posAryB = initSeq(b->slen * 1.5);
+    seq alignA = initSeq(a->slen * 1.5);
+    seq alignB = initSeq(b->slen * 1.5);
 
     seq seqA = stringToSeq(a);
     seq seqB = stringToSeq(b);
 
-    determineAlignment(seqA, seqB, &compareChars, &posAryA, &posAryB);
+    determineAlignment(seqA, seqB, &compareChars, &alignA, &alignB);
 
-    assert(posAryA.alen == posAryB.alen);
-    int len = posAryA.alen;
+    assert(alignA.alen == alignB.alen);
+    int len = alignA.alen;
 
     // Both sequences should be the same length. We'll just get the length of
     // one, which should be the upper limit needed for the masks.
@@ -550,16 +550,16 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
 
     for (i = 0; i < len; i++)
     {
-        int currentComparisonA = compareStringPositions(a, b, posAryA, posAryB, i);
-        int currentComparisonB = compareStringPositions(b, a, posAryB, posAryA, i);
+        int currentComparisonA = compareStringPositions(alignA, alignB, i);
+        int currentComparisonB = compareStringPositions(alignB, alignA, i);
 
         // Look ahead and back a place in the strings to see if we have an
         // isolated matching character among differences.
         if (currentComparisonA == MASK_SAME &&
             i > 0 &&
             i < len - 1 &&
-            compareStringPositions(a, b, posAryA, posAryB, i - 1) != MASK_SAME &&
-            compareStringPositions(a, b, posAryA, posAryB, i + 1) != MASK_SAME)
+            compareStringPositions(alignA, alignB, i - 1) != MASK_SAME &&
+            compareStringPositions(alignA, alignB, i + 1) != MASK_SAME)
         {
             // Pretend the matching characters are different to make the diff
             // look more readable.
@@ -590,11 +590,11 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     freeSeq(&seqA);
     freeSeq(&seqB);
 
-    freeSeq(&posAryA);
-    freeSeq(&posAryB);
+    freeSeq(&alignA);
+    freeSeq(&alignB);
 }
 
-int compareStringPositions(bstring a, bstring b, seq seqA, seq seqB, int i)
+int compareStringPositions(seq seqA, seq seqB, int i)
 {
     int result = MASK_GAP;
 
@@ -602,7 +602,7 @@ int compareStringPositions(bstring a, bstring b, seq seqA, seq seqB, int i)
     {
         // no-op
     }
-    else if (a->data[seqA.val[i]] == b->data[seqB.val[i]])
+    else if (seqA.val[i] == seqB.val[i])
     {
         result = MASK_SAME;
     }
@@ -617,7 +617,7 @@ int compareStringPositions(bstring a, bstring b, seq seqA, seq seqB, int i)
 /* Align two strings using dynamic programming. Based on an algorithm
  * described at http://www.biorecipes.com/DynProgBasic/code.html for aligning
  * sequences of DNA base pairs */
-void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * posPtrS, seq * posPtrT)
+void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * alignSPtr, seq * alignTPtr)
 {
     int n = s.alen;
     int m = t.alen;
@@ -633,8 +633,8 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
 
     // Allocate memory for two integer arrays.
     int aryMemLen = m + n;
-    seq posAryS = initSeq(aryMemLen);
-    seq posAryT = initSeq(aryMemLen);
+    seq alignS = initSeq(aryMemLen);
+    seq alignT = initSeq(aryMemLen);
 
     int p;
 
@@ -644,23 +644,23 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         if (s.alen == 0)
         {
             // Fill S with gaps
-            for (p = 0; p < s.alen; p++) posAryS.val[p] = ALIGN_GAP;
+            for (p = 0; p < s.alen; p++) alignS.val[p] = ALIGN_GAP;
         }
         else
         {
             // Fill S with normal mapping
-            for (p = 0; p < s.alen; p++) posAryS.val[p] = p;
+            for (p = 0; p < s.alen; p++) alignS.val[p] = s.val[p];
         }
 
         if (t.alen == 0)
         {
             // Fill T with gaps
-            for (p = 0; p < t.alen; p++) posAryT.val[p] = ALIGN_GAP;
+            for (p = 0; p < t.alen; p++) alignT.val[p] = ALIGN_GAP;
         }
         else
         {
             // Fill T with normal mapping
-            for (p = 0; p < t.alen; p++) posAryT.val[p] = p;
+            for (p = 0; p < t.alen; p++) alignT.val[p] = t.val[p];
         }
 
         return;
@@ -750,23 +750,23 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         if ((D[i][j] - compare(s, t, j-1, i-1)) == D[i-1][j-1])
         {
             // Both chars
-            unshiftSeq(&posAryS, j - 1);
-            unshiftSeq(&posAryT, i - 1);
+            unshiftSeq(&alignS, s.val[j - 1]);
+            unshiftSeq(&alignT, t.val[i - 1]);
             i--;
             j--;
         }
         else if (D[i][j] - gapScore == D[i][j-1])
         {
             // Gap in t/right
-            unshiftSeq(&posAryS, j - 1);
-            unshiftSeq(&posAryT, ALIGN_GAP);
+            unshiftSeq(&alignS, s.val[j - 1]);
+            unshiftSeq(&alignT, ALIGN_GAP);
             j--;
         }
         else if (D[i][j] - gapScore == D[i-1][j])
         {
             // Gap in s/left
-            unshiftSeq(&posAryS, ALIGN_GAP);
-            unshiftSeq(&posAryT, i - 1);
+            unshiftSeq(&alignS, ALIGN_GAP);
+            unshiftSeq(&alignT, t.val[i - 1]);
             i--;
         }
         else
@@ -781,8 +781,8 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         while (j > 0)
         {
             // Gap in t/right
-            unshiftSeq(&posAryS, j - 1);
-            unshiftSeq(&posAryT, ALIGN_GAP);
+            unshiftSeq(&alignS, s.val[j - 1]);
+            unshiftSeq(&alignT, ALIGN_GAP);
             j--;
         }
     }
@@ -791,8 +791,8 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         while (i > 0)
         {
             // Gap in s/left
-            unshiftSeq(&posAryS, ALIGN_GAP);
-            unshiftSeq(&posAryT, i - 1);
+            unshiftSeq(&alignS, ALIGN_GAP);
+            unshiftSeq(&alignT, t.val[i - 1]);
             i--;
         }
     }
@@ -804,8 +804,8 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
     }
     free(D);
 
-    *posPtrS = posAryS;
-    *posPtrT = posAryT;
+    *alignSPtr = alignS;
+    *alignTPtr = alignT;
 
     // DEBUG
     //printf("\nAlignment(%i, %i):\n%s\n%s\n", s->slen, t->slen, bstr2cstr(sAlign, '_'), bstr2cstr(tAlign, '_'));
