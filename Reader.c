@@ -6,7 +6,7 @@
 #include "bstrlib.h"
 #include "style.css.h"
 
-#define GAP_VAL -1
+#define ALIGN_GAP -1
 #define TRUE 1
 #define FALSE 0
 
@@ -362,7 +362,7 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
 
     if (highlightMask != NULL)
     {
-        int lastState = SAME;
+        int lastState = MASK_SAME;
         int advanceBy;
         int i;
         int contentLen = content->slen; // Copy this because it will change as we work.
@@ -394,7 +394,7 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
 
             if (highlightMask[i] != lastState)
             {
-                if (highlightMask[i] == DIFFERENT)
+                if (highlightMask[i] == MASK_DIFFERENT)
                 {
                     binsert(content, position, bfromcstr("<em>"), ' ');
                     advanceBy += 4;
@@ -555,28 +555,28 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
 
         // Look ahead and back a place in the strings to see if we have an
         // isolated matching character among differences.
-        if (currentComparisonA == SAME &&
+        if (currentComparisonA == MASK_SAME &&
             i > 0 &&
             i < len - 1 &&
-            compareStringPositions(a, b, posAryA, posAryB, i - 1) != SAME &&
-            compareStringPositions(a, b, posAryA, posAryB, i + 1) != SAME)
+            compareStringPositions(a, b, posAryA, posAryB, i - 1) != MASK_SAME &&
+            compareStringPositions(a, b, posAryA, posAryB, i + 1) != MASK_SAME)
         {
             // Pretend the matching characters are different to make the diff
             // look more readable.
             //printf("S");
-            if (currentComparisonA != GAP) currentComparisonA = DIFFERENT;
-            if (currentComparisonB != GAP) currentComparisonB = DIFFERENT;
+            if (currentComparisonA != MASK_GAP) currentComparisonA = MASK_DIFFERENT;
+            if (currentComparisonB != MASK_GAP) currentComparisonB = MASK_DIFFERENT;
         }
         else {
             //printf("-");
         }
 
-        if (currentComparisonA != GAP)
+        if (currentComparisonA != MASK_GAP)
         {
             maskA[posA] = currentComparisonA;
             posA++;
         }
-        if (currentComparisonB != GAP)
+        if (currentComparisonB != MASK_GAP)
         {
             maskB[posB] = currentComparisonB;
             posB++;
@@ -596,18 +596,18 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
 
 int compareStringPositions(bstring a, bstring b, seq seqA, seq seqB, int i)
 {
-    int result = GAP;
+    int result = MASK_GAP;
 
-    if (seqA.val[i] == GAP_VAL)
+    if (seqA.val[i] == ALIGN_GAP)
     {
         // no-op
     }
     else if (a->data[seqA.val[i]] == b->data[seqB.val[i]])
     {
-        result = SAME;
+        result = MASK_SAME;
     }
     else {
-        result = DIFFERENT;
+        result = MASK_DIFFERENT;
     }
 
     return result;
@@ -644,7 +644,7 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         if (s.alen == 0)
         {
             // Fill S with gaps
-            for (p = 0; p < s.alen; p++) posAryS.val[p] = GAP_VAL;
+            for (p = 0; p < s.alen; p++) posAryS.val[p] = ALIGN_GAP;
         }
         else
         {
@@ -655,7 +655,7 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         if (t.alen == 0)
         {
             // Fill T with gaps
-            for (p = 0; p < t.alen; p++) posAryT.val[p] = GAP_VAL;
+            for (p = 0; p < t.alen; p++) posAryT.val[p] = ALIGN_GAP;
         }
         else
         {
@@ -759,13 +759,13 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         {
             // Gap in t/right
             unshiftSeq(&posAryS, j - 1);
-            unshiftSeq(&posAryT, GAP_VAL);
+            unshiftSeq(&posAryT, ALIGN_GAP);
             j--;
         }
         else if (D[i][j] - gapScore == D[i-1][j])
         {
             // Gap in s/left
-            unshiftSeq(&posAryS, GAP_VAL);
+            unshiftSeq(&posAryS, ALIGN_GAP);
             unshiftSeq(&posAryT, i - 1);
             i--;
         }
@@ -782,7 +782,7 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         {
             // Gap in t/right
             unshiftSeq(&posAryS, j - 1);
-            unshiftSeq(&posAryT, GAP_VAL);
+            unshiftSeq(&posAryT, ALIGN_GAP);
             j--;
         }
     }
@@ -791,7 +791,7 @@ void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * 
         while (i > 0)
         {
             // Gap in s/left
-            unshiftSeq(&posAryS, GAP_VAL);
+            unshiftSeq(&posAryS, ALIGN_GAP);
             unshiftSeq(&posAryT, i - 1);
             i--;
         }

@@ -38,7 +38,7 @@ if Config::CONFIG['target_os'] == 'mingw32'
 
 end
 
-file 'Reader.o' => ['Reader.c', 'style.css.h'] do
+file 'Reader.o' => ['Reader.c', 'style.css.h', 'Reader.h'] do
   sh 'gcc -Wall -g -c Reader.c'
 end
 

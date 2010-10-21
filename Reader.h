@@ -21,9 +21,9 @@ enum lineType {
 };
 
 enum highlightMaskValue {
-    SAME,
-    DIFFERENT,
-    GAP
+    MASK_SAME,
+    MASK_DIFFERENT,
+    MASK_GAP
 };
 
 typedef struct {
