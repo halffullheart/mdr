@@ -6,10 +6,6 @@
 #include "bstrlib.h"
 #include "style.css.h"
 
-#define ALIGN_GAP -1
-#define TRUE 1
-#define FALSE 0
-
 char * getHTML()
 {
     bstring html = bfromcstr("<!DOCTYPE html>\n<html>\n");

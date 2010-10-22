@@ -3,6 +3,10 @@
 
 #include "bstrlib.h"
 
+#define ALIGN_GAP -1
+#define TRUE 1
+#define FALSE 0
+
 enum side {
     RIGHT,
     LEFT

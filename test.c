@@ -62,17 +62,17 @@ int main()
 
     determineAlignment(seq3in, seq4in, &compareChars, &seq3out, &seq4out);
     assert(seq3out.alen == seq4out.alen);
-    assert(seq3out.val[0] == 0);
-    assert(seq3out.val[1] == 1);
-    assert(seq4out.val[0] == 0);
-    assert(seq4out.val[1] == -1);
-    assert(seq4out.val[2] == 1);
+    assert(seq3out.val[0] == 'A');
+    assert(seq3out.val[1] == 'B');
+    assert(seq4out.val[0] == 'A');
+    assert(seq4out.val[1] == ALIGN_GAP);
+    assert(seq4out.val[2] == 'C');
 
     int * mask3 = NULL;
     int * mask4 = NULL;
     determineLineHighlighting(str3, str4, &mask3, &mask4);
-    assert(mask3[0] == SAME);
-    assert(mask3[5] == DIFFERENT);
+    assert(mask3[0] == MASK_SAME);
+    assert(mask3[5] == MASK_DIFFERENT);
 //    printf("%i %i %i %i %i %i\n", mask3[0], mask3[1], mask3[2], mask3[3], mask3[4], mask3[5]);
 
 
