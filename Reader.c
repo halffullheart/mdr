@@ -146,56 +146,10 @@ char * getHTML()
                 i == inputLines->qty - 1)
             {
                 int difference = lineMapPosL - lineMapPosR;
-
-                // Before balancing: get all the OLD lines since the last time we balanced. Also get all the NEW lines since the last balance. These are ballance attempts, not actual balancings. Then compute the edit distance for each of the NEW-OLD combinations to find the best matches. Now add the balancing EMPTY lines in the appropriate places such that the lines will meet with each other. Make sure to respect the order of the lines int the diff, e.g. it's not okay to reverse the position of two OLD lines during this process.
+                int j;
 
                 if (difference > 0)
                 {
-                    int * oldLines = malloc((lineMapPosL - lastBalanceL) * sizeof(int));
-                    printf("malloc %i\n", lineMapPosL - lastBalanceL);
-                    if (oldLines == NULL)
-                    {
-                        free(oldLines);
-                        printf("Memory allocation error.\n");
-                        exit(-1);
-                    }
-
-                    int * newLines = malloc((lineMapPosR - lastBalanceR) * sizeof(int));
-                    printf("malloc %i\n", lineMapPosR - lastBalanceR);
-                    if (newLines == NULL)
-                    {
-                        free(newLines);
-                        printf("Memory allocation error.\n");
-                        exit(-1);
-                    }
-
-                    int j;
-
-                    int oldLinesCount = 0;
-                    // Get all the OLD lines since the last balancing.
-                    for (j = lastBalanceL; j < lineMapPosL; j++)
-                    {
-                        if (lineMapL[j].type == OLD)
-                        {
-                            oldLines[oldLinesCount] = lineMapL[j].inputPos;
-                            printf("Old line: %i\n", oldLines[oldLinesCount]);
-                            oldLinesCount++;
-                        }
-                    }
-
-                    int newLinesCount = 0;
-                    // Get all the OLD lines since the last balancing.
-                    for (j = lastBalanceR; j < lineMapPosR; j++)
-                    {
-                        if (lineMapR[j].type == NEW)
-                        {
-                            newLines[newLinesCount] = lineMapR[j].inputPos;
-                            printf("New line: %i\n", newLines[newLinesCount]);
-                            newLinesCount++;
-                        }
-                    }
-                    printf("--\n");
-
                     for (j = 0; j < difference; j++)
                     {
                         lineMapR[lineMapPosR].type = EMPTY;
@@ -204,7 +158,6 @@ char * getHTML()
                 }
                 else if (difference < 0)
                 {
-                    int j;
                     for (j = 0; j < (difference * -1); j++)
                     {
                         lineMapL[lineMapPosL].type = EMPTY;
