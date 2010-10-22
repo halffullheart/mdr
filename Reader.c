@@ -51,11 +51,6 @@ char * getHTML()
         int lineMapPosL = 0;
         int lineMapPosR = 0;
 
-        char oldFileId[3]  = "---";
-        char newFileId[3]  = "+++";
-        char lineInfoId[3] = "@@ ";
-        char headerId[3]   = "dif";
-
         int useL;
         int useR;
         enum lineType type;
@@ -63,8 +58,6 @@ char * getHTML()
         int lineNoL = 0;
         int lineNoR = 0;
         int firstInfoLine = TRUE;
-        int lastBalanceL = 0;
-        int lastBalanceR = 0;
 
         // Map input lines to their output column (left, right, or both)
         int i;
@@ -75,7 +68,7 @@ char * getHTML()
             type = SHARED;
             padding = 1;
 
-            if (bisstemeqblk(inputLines->entry[i], oldFileId, 3) == 1)
+            if (stringStartsWith(inputLines->entry[i], "---"))
             {
                 type = OLD_FILE;
                 useL = 1;
@@ -83,7 +76,7 @@ char * getHTML()
                 lineNoL = -1;
                 lineNoR = -1;
             }
-            else if (bisstemeqblk(inputLines->entry[i], newFileId, 3) == 1)
+            else if (stringStartsWith(inputLines->entry[i], "+++"))
             {
                 type = NEW_FILE;
                 useR = 1;
@@ -91,7 +84,7 @@ char * getHTML()
                 lineNoL = -1;
                 lineNoR = -1;
             }
-            else if (bisstemeqblk(inputLines->entry[i], lineInfoId, 3) == 1)
+            else if (stringStartsWith(inputLines->entry[i], "@@"))
             {
                 syncLineNumbers(inputLines->entry[i], &lineNoL, &lineNoR);
                 if (firstInfoLine)
@@ -112,7 +105,7 @@ char * getHTML()
                 }
                 firstInfoLine = FALSE;
             }
-            else if (bisstemeqblk(inputLines->entry[i], headerId, 3) == 1)
+            else if (stringStartsWith(inputLines->entry[i], "diff"))
             {
                 type = HEADER;
                 lineNoL = 0;
@@ -160,8 +153,6 @@ char * getHTML()
                         lineMapPosL++;
                     }
                 }
-                lastBalanceL = lineMapPosL;
-                lastBalanceR = lineMapPosR;
             }
 
             if (useL)
@@ -945,4 +936,9 @@ seq stringToSeq(bstring str)
     }
 
     return s;
+}
+
+int stringStartsWith(bstring base, char * start)
+{
+    return bisstemeqblk(base, start, strlen(start));
 }

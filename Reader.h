@@ -88,4 +88,6 @@ seq stringToSeq(bstring);
 
 void freeSeq(seq *);
 
+int stringStartsWith(bstring, char *);
+
 #endif
