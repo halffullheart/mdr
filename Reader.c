@@ -58,6 +58,8 @@ char * getHTML()
         int lineNoL = 0;
         int lineNoR = 0;
         int firstInfoLine = TRUE;
+        int startNewFileOk = FALSE;
+        int startOldFileOk = FALSE;
 
         // Map input lines to their output column (left, right, or both)
         int i;
@@ -68,21 +70,23 @@ char * getHTML()
             type = SHARED;
             padding = 1;
 
-            if (stringStartsWith(inputLines->entry[i], "---"))
+            if (startOldFileOk && stringStartsWith(inputLines->entry[i], "---"))
             {
                 type = OLD_FILE;
                 useL = 1;
                 padding = 4;
                 lineNoL = -1;
                 lineNoR = -1;
+                startOldFileOk = FALSE;
             }
-            else if (stringStartsWith(inputLines->entry[i], "+++"))
+            else if (startNewFileOk && stringStartsWith(inputLines->entry[i], "+++"))
             {
                 type = NEW_FILE;
                 useR = 1;
                 padding = 4;
                 lineNoL = -1;
                 lineNoR = -1;
+                startNewFileOk = FALSE;
             }
             else if (stringStartsWith(inputLines->entry[i], "@@"))
             {
@@ -111,6 +115,8 @@ char * getHTML()
                 lineNoL = 0;
                 lineNoR = 0;
                 firstInfoLine = TRUE;
+                startNewFileOk = TRUE;
+                startOldFileOk = TRUE;
             }
             else if (bdata(inputLines->entry[i])[0] == '-')
             {
