@@ -6,10 +6,6 @@
 #include "bstrlib.h"
 #include "style.css.h"
 
-#define ALIGN_GAP -1
-#define TRUE 1
-#define FALSE 0
-
 char * getHTML()
 {
     bstring html = bfromcstr("<!DOCTYPE html>\n<html>\n");
@@ -55,11 +51,6 @@ char * getHTML()
         int lineMapPosL = 0;
         int lineMapPosR = 0;
 
-        char oldFileId[3]  = "---";
-        char newFileId[3]  = "+++";
-        char lineInfoId[3] = "@@ ";
-        char headerId[3]   = "dif";
-
         int useL;
         int useR;
         enum lineType type;
@@ -67,8 +58,8 @@ char * getHTML()
         int lineNoL = 0;
         int lineNoR = 0;
         int firstInfoLine = TRUE;
-        int lastBalanceL = 0;
-        int lastBalanceR = 0;
+        int startNewFileOk = FALSE;
+        int startOldFileOk = FALSE;
 
         // Map input lines to their output column (left, right, or both)
         int i;
@@ -79,23 +70,25 @@ char * getHTML()
             type = SHARED;
             padding = 1;
 
-            if (bisstemeqblk(inputLines->entry[i], oldFileId, 3) == 1)
+            if (startOldFileOk && stringStartsWith(inputLines->entry[i], "---"))
             {
                 type = OLD_FILE;
                 useL = 1;
                 padding = 4;
                 lineNoL = -1;
                 lineNoR = -1;
+                startOldFileOk = FALSE;
             }
-            else if (bisstemeqblk(inputLines->entry[i], newFileId, 3) == 1)
+            else if (startNewFileOk && stringStartsWith(inputLines->entry[i], "+++"))
             {
                 type = NEW_FILE;
                 useR = 1;
                 padding = 4;
                 lineNoL = -1;
                 lineNoR = -1;
+                startNewFileOk = FALSE;
             }
-            else if (bisstemeqblk(inputLines->entry[i], lineInfoId, 3) == 1)
+            else if (stringStartsWith(inputLines->entry[i], "@@"))
             {
                 syncLineNumbers(inputLines->entry[i], &lineNoL, &lineNoR);
                 if (firstInfoLine)
@@ -116,12 +109,14 @@ char * getHTML()
                 }
                 firstInfoLine = FALSE;
             }
-            else if (bisstemeqblk(inputLines->entry[i], headerId, 3) == 1)
+            else if (stringStartsWith(inputLines->entry[i], "diff"))
             {
                 type = HEADER;
                 lineNoL = 0;
                 lineNoR = 0;
                 firstInfoLine = TRUE;
+                startNewFileOk = TRUE;
+                startOldFileOk = TRUE;
             }
             else if (bdata(inputLines->entry[i])[0] == '-')
             {
@@ -164,8 +159,6 @@ char * getHTML()
                         lineMapPosL++;
                     }
                 }
-                lastBalanceL = lineMapPosL;
-                lastBalanceR = lineMapPosR;
             }
 
             if (useL)
@@ -949,4 +942,9 @@ seq stringToSeq(bstring str)
     }
 
     return s;
+}
+
+int stringStartsWith(bstring base, char * start)
+{
+    return bisstemeqblk(base, start, strlen(start));
 }
