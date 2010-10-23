@@ -36,7 +36,7 @@ td {
     color: #000;
 }
 .line.change {
-    background: #9af2ed;
+    background: #b4f4f0;
     color: #000;
 }
 .line.empty {
@@ -61,5 +61,5 @@ td {
 }
 .line em {
     font-style: normal;
-    background: #60d1cb;
+    background: #7cd9d4;
 }
