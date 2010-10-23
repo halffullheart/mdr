@@ -26,7 +26,6 @@ int main (int argc, const char * argv[])
 
         [NSAutoreleasePool new];
         [NSApplication sharedApplication];
-//        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
         [NSApp setDelegate:[MDRApplicationDelegate alloc]];
 
         NSString* webContent = [NSString stringWithCString:html encoding:NSUTF8StringEncoding];
