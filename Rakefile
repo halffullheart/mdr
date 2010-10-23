@@ -11,14 +11,14 @@ task :default => 'build'
 task :build => 'mdr'
 task :release => 'release/mdr'
 
-if Config::CONFIG['target_os'] == 'darwin10'
+if Config::CONFIG['host_vendor'] == 'apple'
 
   file 'mdr' => ['mac/MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
     sh 'gcc -Wall -g bstrlib.o Reader.o mac/MakeDiffReadable.m -o mdr -framework Cocoa -framework WebKit'
   end
 
   file 'release/mdr' => ['mac/MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
-    sh 'gcc -Wall -03 bstrlib.o Reader.o mac/MakeDiffReadable.m -o release/mdr -framework Cocoa -framework WebKit'
+    sh 'gcc -Wall -02 bstrlib.o Reader.o mac/MakeDiffReadable.m -o release/mdr -framework Cocoa -framework WebKit'
   end
 
 end
@@ -33,7 +33,7 @@ if Config::CONFIG['target_os'] == 'mingw32'
   end
 
   file 'release/mdr.exe' => ['win/MakeDiffReadable.c', 'Reader.o', 'bstrlib.o'] do
-    sh 'gcc -Wall -03 bstrlib.o Reader.o win/MakeDiffReadable.c -o release/mdr'
+    sh 'gcc -Wall -02 bstrlib.o Reader.o win/MakeDiffReadable.c -o release/mdr'
   end
 
 end
