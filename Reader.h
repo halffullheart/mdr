@@ -50,37 +50,37 @@ char * getHelp();
 
 char * getHTML();
 
-bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpaces);
+bstring getContentFromLine(bstring, int, int *);
 
-void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask);
+void createLine(int, bstring, bstring, lineData, int *);
 
-bstring getWhitespace(int spaces);
+bstring getWhitespace(int);
 
-void createEmptyLine(bstring base);
+void createEmptyLine(bstring);
 
-char * typeString(enum lineType type);
+char * typeString(enum lineType);
 
-char * lineNumberString(int lineNo);
+char * lineNumberString(int);
 
-void syncLineNumbers(bstring, int * lineNoL, int * lineNoR);
+void syncLineNumbers(bstring, int *, int *);
 
-void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB);
+void determineLineHighlighting(bstring, bstring, int **, int **);
 
 int compareStringPositions(seq, seq, int);
 
-void determineAlignment(seq s, seq t, int (*compare)(seq, seq, int, int), seq * posPtrS, seq * posPtrT);
+void determineAlignment(seq, seq, int (*compare)(seq, seq, int, int), seq *, seq *);
 
-void alignStrings(bstring s, bstring t);
+void alignStrings(bstring, bstring);
 
-int charSimilarity(char a, char b);
+int charSimilarity(char, char);
 
-int compareChars(seq a, seq b, int ai, int bi);
+int compareChars(seq, seq, int, int);
 
-int max2(int a, int b);
+int max2(int, int);
 
-int max3(int a, int b, int c);
+int max3(int, int, int);
 
-int editDistance(bstring a, bstring b);
+int editDistance(bstring, bstring);
 
 seq initSeq(int);
 
