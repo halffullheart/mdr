@@ -12,7 +12,7 @@ html{color:#000;background:#FFF;}body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pr
 html {
     font-family: "Lucida Grande", Arial, Helvetica, sans-serif;
     font-size: 15px;
-    background: #e6e6e0 url(img/background.png);
+    background: #e6e6e0 url(../img/background.png);
 }
 
 body {
