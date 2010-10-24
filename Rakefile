@@ -8,7 +8,6 @@ CLEAN.include('*.o')
 CLEAN.include('*.css.h')
 
 @dev_exe = 'mdr'
-
 @dev_flags = %w{-Wall -g}
 @release_flags = %w{-02}
 @exe_flags = []
@@ -22,8 +21,14 @@ if Config::CONFIG['host_vendor'] == 'apple'
     '-framework Cocoa',
     '-framework WebKit'
   ]
-  @dev_flags.push ['-arch i386', '-arch ppc']
-  @release_flags.push ['-arch i386', '-arch ppc']
+  mac_flags = [
+    '-arch i386', # 32bit Intel
+    '-arch ppc', # 32bit PPC
+    '-isysroot /Developer/SDKs/MacOSX10.5.sdk', # Base SDK
+    '-mmacosx-version-min=10.4', # Mac OS X Deployment Target
+  ];
+  @dev_flags.push mac_flags
+  @release_flags.push mac_flags
 end
 
 @release_exe = "release/#{@dev_exe}"
