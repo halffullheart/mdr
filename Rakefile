@@ -12,11 +12,13 @@ CLEAN.include('*.css.h')
 @release_flags = %w{-02}
 @exe_flags = []
 
-if Config::CONFIG['target_os'] == 'mingw32'
+if Config::CONFIG['host_vendor'] == 'pc'
+  @main_file = 'win/MakeDiffReadable.c'
   @dev_exe = 'mdr.exe'
 end
 
 if Config::CONFIG['host_vendor'] == 'apple'
+  @main_file = 'mac/MakeDiffReadable.m'
   @exe_flags = [
     '-framework Cocoa',
     '-framework WebKit'
@@ -38,11 +40,11 @@ task :build => @dev_exe
 task :release => @release_exe
 
 file @dev_exe => ['mac/MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
-  sh "gcc #{@dev_flags.join ' '} #{@exe_flags.join ' '} bstrlib.o Reader.o mac/MakeDiffReadable.m -o #{@dev_exe}"
+  sh "gcc #{@dev_flags.join ' '} #{@exe_flags.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@dev_exe}"
 end
 
 file @release_exe => ['mac/MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
-  sh "gcc #{@release_flags.join ' '} #{@exe_flags.join ' '} bstrlib.o Reader.o mac/MakeDiffReadable.m -o #{@release_exe}"
+  sh "gcc #{@release_flags.join ' '} #{@exe_flags.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@release_exe}"
 end
 
 file 'Reader.o' => ['Reader.c', 'style.css.h', 'Reader.h'] do
@@ -59,5 +61,7 @@ file 'test' => ['Reader.o', 'bstrlib.o', 'test.c'] do
 end
 
 file 'style.css.h' => 'css/style.css' do
-  sh 'cd css; xxd -i style.css > ../style.css.h'
+  Dir.chdir 'css' do
+    sh 'xxd -i style.css > ../style.css.h'
+  end
 end
