@@ -28,16 +28,20 @@ td {
     border-left: 1px solid #ccc;
 }
 .line.new {
-    background: #a7ff92;
+    background: #aef98b;
     color: #000;
 }
 .line.old {
-    background: #c0bfff;
+    background: #fbc7ac;
     color: #000;
 }
 .line.change {
-    background: #b4f4f0;
+    background: #ebe1ff;
     color: #000;
+}
+.line em {
+    font-style: normal;
+    background: #c5b8ff;
 }
 .line.empty {
     background: #f5f5f5;
@@ -58,8 +62,4 @@ td {
     text-align: right;
     border-right: 1px solid #ccc;
     border-left: 1px solid #ccc;
-}
-.line em {
-    font-style: normal;
-    background: #7cd9d4;
 }
