@@ -11,10 +11,12 @@ CLEAN.include('*.css.h')
 @dev_flags = %w{-Wall -g}
 @release_flags = %w{-02}
 @exe_flags = []
+@extra_objects = []
 
 if Config::CONFIG['host_vendor'] == 'pc'
   @main_file = 'win/MakeDiffReadable.c'
   @dev_exe = 'mdr.exe'
+  @extra_objects.push 'Resources.o'
 end
 
 if Config::CONFIG['host_vendor'] == 'apple'
@@ -39,12 +41,12 @@ task :default => 'build'
 task :build => @dev_exe
 task :release => @release_exe
 
-file @dev_exe => [@main_file, 'Reader.o', 'bstrlib.o'] do
-  sh "gcc #{@dev_flags.join ' '} #{@exe_flags.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@dev_exe}"
+file @dev_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects do
+  sh "gcc #{@dev_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@dev_exe}"
 end
 
-file @release_exe => [@main_file, 'Reader.o', 'bstrlib.o'] do
-  sh "gcc #{@release_flags.join ' '} #{@exe_flags.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@release_exe}"
+file @release_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects do
+  sh "gcc #{@release_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@release_exe}"
 end
 
 file 'Reader.o' => ['Reader.c', 'style.css.h', 'Reader.h'] do
@@ -64,4 +66,8 @@ file 'style.css.h' => 'css/style.css' do
   Dir.chdir 'css' do
     sh 'xxd -i style.css > ../style.css.h'
   end
+end
+
+file 'Resources.o' => 'win/Resources.rc' do
+  sh 'windres win/Resources.rc Resources.o'
 end
