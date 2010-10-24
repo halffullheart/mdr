@@ -6,6 +6,16 @@
 #include "bstrlib.h"
 #include "style.css.h"
 
+char * getVersion()
+{
+    return "mdr 1.0b1\n";
+}
+
+char * getHelp()
+{
+    return "Help text goes here\n";
+}
+
 char * getHTML()
 {
     bstring html = bfromcstr("<!DOCTYPE html>\n<html>\n");

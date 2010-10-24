@@ -44,6 +44,10 @@ typedef struct {
     int alen; // Array size
 } seq;
 
+char * getVersion();
+
+char * getHelp();
+
 char * getHTML();
 
 bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpaces);

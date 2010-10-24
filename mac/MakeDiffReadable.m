@@ -9,17 +9,44 @@
 int main (int argc, const char * argv[])
 {
 
-    char * html = getHTML();
+    char * html;
 
-    if (argc > 1 && strcmp(argv[1], "--html") == 0)
+    if (argc > 1)
     {
-        printf("HTML Output:\n%s\n", html);
-        free(html);
+        if (strcmp(argv[1], "--html") == 0)
+        {
+            html = getHTML();
+            printf("%s", html);
+            free(html);
+        }
+        else if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
+        {
+            printf("%s", getVersion());
+        }
+        else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
+        {
+            printf("%s", getHelp());
+        }
+        else
+        {
+            printf("Unknown arguments.\n%s", getHelp());
+        }
         return 0;
+    }
+    else
+    {
+        // Calling getHTML will grab text from stdin. We want to do this before
+        // we fork in case there isn't any so the user can enter it manually.
+        html = getHTML();
     }
 
     pid_t pid = fork();
-    if (pid == 0)
+    if (pid)
+    {
+        // Parent process just quits after fork.
+        return 0;
+    }
+    else
     {
         // Child process.
         setsid();
@@ -31,7 +58,7 @@ int main (int argc, const char * argv[])
         NSString* webContent = [NSString stringWithCString:html encoding:NSUTF8StringEncoding];
         free(html);
 
-        NSRect rect = NSMakeRect(0, 0, 1000, 500);
+        NSRect rect = NSMakeRect(0, 0, 900, 600);
 
         id window = [[[NSWindow alloc] initWithContentRect:rect
             styleMask:(NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask | NSMiniaturizableWindowMask)
@@ -51,11 +78,6 @@ int main (int argc, const char * argv[])
         [NSApp activateIgnoringOtherApps:YES];
         [NSApp run];
 
-        return 0;
-    }
-    else
-    {
-        // Parent process just quits after fork.
         return 0;
     }
 
