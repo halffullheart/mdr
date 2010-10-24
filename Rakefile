@@ -39,11 +39,11 @@ task :default => 'build'
 task :build => @dev_exe
 task :release => @release_exe
 
-file @dev_exe => ['mac/MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
+file @dev_exe => [@main_file, 'Reader.o', 'bstrlib.o'] do
   sh "gcc #{@dev_flags.join ' '} #{@exe_flags.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@dev_exe}"
 end
 
-file @release_exe => ['mac/MakeDiffReadable.m', 'Reader.o', 'bstrlib.o'] do
+file @release_exe => [@main_file, 'Reader.o', 'bstrlib.o'] do
   sh "gcc #{@release_flags.join ' '} #{@exe_flags.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@release_exe}"
 end
 

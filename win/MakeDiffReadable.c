@@ -7,15 +7,34 @@
 int main (int argc, const char * argv[])
 {
 
-    char * html = getHTML();
+    char * html;
 
-    if (argc > 1 && strcmp(argv[1], "--html") == 0)
+    if (argc > 1)
     {
-        printf("HTML Output:\n%s\n", html);
-        free(html);
+        if (strcmp(argv[1], "--html") == 0)
+        {
+            html = getHTML();
+            printf("%s", html);
+            free(html);
+        }
+        else if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)
+        {
+            printf("%s", getVersion());
+        }
+        else if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
+        {
+            printf("%s", getHelp());
+        }
+        else
+        {
+            printf("Unknown arguments.\n%s", getHelp());
+        }
         return 0;
     }
-
+    else
+    {
+        html = getHTML();
+    }
 
     DWORD dwRetVal = 0;
     DWORD dwBytesWritten = 0;
