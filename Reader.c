@@ -500,6 +500,10 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
 
     int i; // Position along the aligned sequences.
 
+    int firstValueInBlockA = -1;
+    int firstPosInBlockA = -1;
+    int lastComparisonA = MASK_SAME;
+
     // Positions in each mask.
     int posA = 0;
     int posB = 0;
@@ -517,14 +521,34 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
             compareStringPositions(alignA, alignB, i - 1) != MASK_SAME &&
             compareStringPositions(alignA, alignB, i + 1) != MASK_SAME)
         {
-            // Pretend the matching characters are different to make the diff
-            // look more readable.
-            //printf("S");
-            if (currentComparisonA != MASK_GAP) currentComparisonA = MASK_DIFFERENT;
-            if (currentComparisonB != MASK_GAP) currentComparisonB = MASK_DIFFERENT;
+            if (firstPosInBlockA > 0 && firstValueInBlockA == seqA.val[posA])
+            {
+                // Special case for when the char we are about to smooth is
+                // actually at the beginning of the highlighted block.
+                maskA[firstPosInBlockA] = MASK_SAME;
+                currentComparisonA = MASK_DIFFERENT;
+                //printf("%c|%c\n", seqA.val[posA-1], seqA.val[posA]);
+            }
+            else
+            {
+                // Pretend the matching characters are different to make the diff
+                // look more readable.
+                //printf("S");
+                if (currentComparisonA != MASK_GAP) currentComparisonA = MASK_DIFFERENT;
+                if (currentComparisonB != MASK_GAP) currentComparisonB = MASK_DIFFERENT;
+            }
         }
         else {
             //printf("-");
+        }
+
+        // Entering region of difference.
+        if (currentComparisonA != lastComparisonA &&
+            currentComparisonA == MASK_DIFFERENT)
+        {
+            // Record position and value.
+            firstValueInBlockA = seqA.val[posA];
+            firstPosInBlockA = posA;
         }
 
         if (currentComparisonA != MASK_GAP)
@@ -536,6 +560,11 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
         {
             maskB[posB] = currentComparisonB;
             posB++;
+        }
+
+        if (currentComparisonA != MASK_GAP)
+        {
+            lastComparisonA = currentComparisonA;
         }
     }
     //printf("\n");
