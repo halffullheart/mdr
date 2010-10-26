@@ -2,8 +2,17 @@
 #import <WebKit/WebKit.h>
 #import <unistd.h>
 #import "../Reader.h"
+#import "../appIcon.png.h"
 
 @interface MDRApplicationDelegate : NSObject
+- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) sender;
+@end
+
+@interface MDRServer : NSObject {
+    NSMutableArray * windowList;
+}
+- (void) setWindowList:(NSMutableArray *) list;
+- (BOOL) showWindowWithContent:(NSString *) displayContent;
 @end
 
 int main (int argc, const char * argv[])
@@ -51,32 +60,82 @@ int main (int argc, const char * argv[])
         // Child process.
         setsid();
 
-        [NSAutoreleasePool new];
-        [NSApplication sharedApplication];
-        [NSApp setDelegate:[MDRApplicationDelegate alloc]];
-
-        NSString* webContent = [NSString stringWithCString:html encoding:NSUTF8StringEncoding];
+        id pool = [NSAutoreleasePool new];
+        NSString * displayContent = [NSString stringWithCString:html encoding:NSUTF8StringEncoding];
         free(html);
 
-        NSRect rect = NSMakeRect(0, 0, 900, 600);
+        id connectionName = @"com.halffullheart.mdr.diffserverconnection";
 
-        id window = [[[NSWindow alloc] initWithContentRect:rect
-            styleMask:(NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask | NSMiniaturizableWindowMask)
-            backing:NSBackingStoreBuffered defer:NO]
-                autorelease];
+        NSProxy * proxy = [[NSConnection rootProxyForConnectionWithRegisteredName:connectionName host:nil] autorelease];
 
-        [window cascadeTopLeftFromPoint:NSMakePoint(200,200)];
-        [window setTitle:@"mdr"];
-        [window makeKeyAndOrderFront:nil];
-        [window orderFrontRegardless];
+        if (proxy)
+        {
+            //NSLog(@"Client mode.");
+            // Connected to server - act as client.
+            BOOL result = [(MDRServer *)proxy showWindowWithContent:displayContent];
+            if (result) {
+                //NSLog(@"Server says it's okay");
+            }
+            [pool drain];
+        }
+        else
+        {
+            [NSApplication sharedApplication];
+            [NSApp setDelegate:[MDRApplicationDelegate alloc]];
 
-        id webView = [[[WebView alloc] initWithFrame:rect] autorelease];
-        [webView setEditable:YES];
-        [window setContentView:webView];
-        [[webView mainFrame] loadHTMLString:webContent baseURL: nil];
+            //NSLog(@"Server mode.");
+            // No connection - act as server.
 
-        [NSApp activateIgnoringOtherApps:YES];
-        [NSApp run];
+            // Transform into "real" app with dock icon and menubar.
+            ProcessSerialNumber psn = { 0, kCurrentProcess };
+            OSStatus returnCode = TransformProcessType(&psn, kProcessTransformToForegroundApplication);
+            if (returnCode != 0) {
+                printf("Could not bring the application to front. Error %d", (int)returnCode);
+            }
+
+            // Set app icon.
+            NSImage * appIcon = [[[NSImage alloc] initWithData:[NSData dataWithBytes:appIcon_png length:appIcon_png_len]] autorelease];
+            [NSApp setApplicationIconImage: appIcon];
+
+            // Set up menus.
+            id menubar = [[NSMenu new] autorelease];
+            [NSApp setMainMenu:menubar];
+
+            // App menu.
+            id appMenuItem = [[NSMenuItem new] autorelease];
+            [menubar addItem:appMenuItem];
+            id appMenu = [[NSMenu new] autorelease];
+            id appName = [[NSProcessInfo processInfo] processName];
+            id quitTitle = [@"Quit " stringByAppendingString:appName];
+            id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle
+                action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
+            [appMenu addItem:quitMenuItem];
+            [appMenuItem setSubmenu:appMenu];
+
+            // Window menu.
+            id windowMenuItem = [[NSMenuItem new] autorelease];
+            [menubar addItem:windowMenuItem];
+            id windowMenu = [[[NSMenu alloc] initWithTitle:@"Window"] autorelease];
+            [windowMenuItem setSubmenu:windowMenu];
+            [NSApp setWindowsMenu:windowMenu];
+
+            // Set up server.
+            id server = [[[MDRServer alloc] init] autorelease];
+
+            id windowList = [[[NSMutableArray alloc] init] autorelease];
+            [server setWindowList:windowList];
+
+            NSConnection * serverConnection = [[NSConnection new] autorelease];
+            [serverConnection setRootObject:server];
+            [serverConnection registerName:connectionName];
+
+            // Have the server launch a window with the output for this time.
+            [server showWindowWithContent:displayContent];
+
+            [NSApp activateIgnoringOtherApps:YES];
+            [NSApp run];
+
+        }
 
         return 0;
     }
@@ -84,8 +143,40 @@ int main (int argc, const char * argv[])
 }
 
 @implementation MDRApplicationDelegate
+
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) sender
 {
     return YES;
 }
+
+@end
+
+@implementation MDRServer
+
+- (void) setWindowList:(NSMutableArray *) list
+{
+    windowList = list;
+}
+
+- (BOOL) showWindowWithContent:(NSString *) displayContent
+{
+    //NSLog(@"Client contacted me");
+    NSRect startingWindowSize = NSMakeRect(0, 0, 900, 600);
+
+    id window = [[[NSWindow alloc] initWithContentRect:startingWindowSize
+        styleMask:(NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask | NSMiniaturizableWindowMask)
+        backing:NSBackingStoreBuffered defer:NO] autorelease];
+
+    [window cascadeTopLeftFromPoint:NSMakePoint(200,200)];
+    [window setTitle:@"mdr"];
+    [window makeKeyAndOrderFront:nil];
+
+    id webView = [[[WebView alloc] initWithFrame:startingWindowSize] autorelease];
+    [window setContentView:webView];
+    [[webView mainFrame] loadHTMLString:displayContent baseURL: nil];
+
+    [windowList addObject:window];
+    return YES;
+}
+
 @end

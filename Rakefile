@@ -33,6 +33,7 @@ if Config::CONFIG['host_vendor'] == 'apple'
   ];
   @dev_flags.push mac_flags
   @release_flags.push mac_flags
+  @extra_objects.push 'appIcon.png.h'
 end
 
 @release_exe = "release/#{@dev_exe}"
@@ -65,6 +66,12 @@ end
 file 'style.css.h' => 'css/style.css' do
   Dir.chdir 'css' do
     sh 'xxd -i style.css > ../style.css.h'
+  end
+end
+
+file 'appIcon.png.h' => 'img/appIcon.png' do
+  Dir.chdir 'img' do
+    sh 'xxd -i appIcon.png > ../appIcon.png.h'
   end
 end
 
