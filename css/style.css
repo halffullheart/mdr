@@ -1,14 +1,19 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: monospace;
-    font-size: 13px;
+    font-family: Monaco, monospace;
+    font-size: 11px;
+    line-height: 15px;
 }
 table {
     width: 100%;
     border-collapse: collapse;
 }
+tr {
+    padding: 0;
+}
 td {
+    padding: 0;
     vertical-align: top;
 }
 .line {
@@ -25,6 +30,8 @@ td {
     border-top: 1px solid #fff;
     border-right: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
+}
+.line.new_file {
     border-left: 1px solid #ccc;
 }
 .line.new {
@@ -40,6 +47,7 @@ td {
     color: #000;
 }
 .line em {
+    padding: 0 0 1px;
     font-style: normal;
     background: #c5b8ff;
 }
@@ -62,4 +70,7 @@ td {
     text-align: right;
     border-right: 1px solid #ccc;
     border-left: 1px solid #ccc;
+}
+.line_number.left {
+    border-left: none;
 }

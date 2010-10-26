@@ -389,7 +389,11 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
     if (lineMap.lineNo >= 0 && lineMap.type != INFO)
     {
         char * lineNo = lineNumberString(lineMap.lineNo);
-        bcatcstr(base, "<td class='line_number' width='*'>");
+        bcatcstr(base, "<td class='line_number ");
+        bcatcstr(base, typeString(lineMap.type));
+        bcatcstr(base, " ");
+        bcatcstr(base, (side == LEFT) ? "left" : "right");
+        bcatcstr(base, "' width='*'>");
         bcatcstr(base, lineNo);
         bcatcstr(base, "</td>\n");
         bcatcstr(base, "<td class='line ");
@@ -402,6 +406,8 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
     bstring whitespace;
 
     bcatcstr(base, typeString(lineMap.type));
+    bcatcstr(base, " ");
+    bcatcstr(base, (side == LEFT) ? "left" : "right");
     bcatcstr(base, "' width='49%'>");
     bconcat(base, whitespace = getWhitespace(lineMap.leadingSpaces));
     bconcat(base, content);
