@@ -2,6 +2,7 @@ syntax: glob
 *.o
 *.exe
 *.css.h
+*.png.h
 .DS_Store
 mdr
 test
