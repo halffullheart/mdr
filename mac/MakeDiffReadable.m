@@ -6,6 +6,7 @@
 
 @interface MDRApplicationDelegate : NSObject
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) sender;
+- (void) closeKeyWindow:(id) sender;
 @end
 
 @interface MDRServer : NSObject {
@@ -112,6 +113,15 @@ int main (int argc, const char * argv[])
             [appMenu addItem:quitMenuItem];
             [appMenuItem setSubmenu:appMenu];
 
+            // File menu.
+            id fileMenuItem = [[NSMenuItem new] autorelease];
+            [menubar addItem:fileMenuItem];
+            id fileMenu = [[[NSMenu alloc] initWithTitle:@"File"] autorelease];
+            id closeWindowItem = [[[NSMenuItem alloc] initWithTitle:@"Close Window"
+                action:@selector(closeKeyWindow:) keyEquivalent:@"w"] autorelease];
+            [fileMenu addItem:closeWindowItem];
+            [fileMenuItem setSubmenu:fileMenu];
+
             // Window menu.
             id windowMenuItem = [[NSMenuItem new] autorelease];
             [menubar addItem:windowMenuItem];
@@ -122,6 +132,7 @@ int main (int argc, const char * argv[])
             // Set up server.
             id server = [[[MDRServer alloc] init] autorelease];
 
+            // Keep list of windows so they are still in memory in the main app loop.
             id windowList = [[[NSMutableArray alloc] init] autorelease];
             [server setWindowList:windowList];
 
@@ -149,6 +160,11 @@ int main (int argc, const char * argv[])
     return YES;
 }
 
+- (void) closeKeyWindow:(id) sender
+{
+    [[NSApp keyWindow] close];
+}
+
 @end
 
 @implementation MDRServer
@@ -168,7 +184,8 @@ int main (int argc, const char * argv[])
         backing:NSBackingStoreBuffered defer:NO] autorelease];
 
     [window cascadeTopLeftFromPoint:NSMakePoint(200,200)];
-    [window setTitle:@"mdr"];
+    id windowTitle = [@"mdr " stringByAppendingString:[NSString stringWithFormat:@"%d", [windowList count] + 1]];
+    [window setTitle:windowTitle];
     [window makeKeyAndOrderFront:nil];
 
     id webView = [[[WebView alloc] initWithFrame:startingWindowSize] autorelease];
