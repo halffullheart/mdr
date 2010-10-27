@@ -13,7 +13,13 @@ char * getVersion()
 
 char * getHelp()
 {
-    return "Help text goes here\n";
+    return "Usage: mdr [options]\n"
+           "Options:\n"
+           "  -h, --help         Display this help message.\n"
+           "  -v, --version      Display version of mdr.\n"
+           "mdr accepts standard input. Examples:\n"
+           "  mdr < changes.diff\n"
+           "  hg diff | mdr\n";
 }
 
 char * getHTML()
