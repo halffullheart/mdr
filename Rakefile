@@ -78,3 +78,11 @@ end
 file 'Resources.o' => 'win/Resources.rc' do
   sh 'windres win/Resources.rc Resources.o'
 end
+
+task :install => @release_exe do
+  sh "cp #{@release_exe} ~/bin/mdr"
+end
+
+task :uninstall do
+  sh 'rm ~/bin/mdr'
+end
