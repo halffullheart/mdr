@@ -11,7 +11,7 @@ CLEAN.include('*.css.h')
 
 @dev_exe = 'mdr'
 @dev_flags = %w{-Wall -g}
-@release_flags = %w{-02}
+@release_flags = []
 @exe_flags = []
 @extra_objects = []
 
@@ -35,6 +35,7 @@ if Config::CONFIG['host_vendor'] == 'apple'
   ];
   @dev_flags.push mac_flags
   @release_flags.push mac_flags
+  @release_flags.push '-03'
   @extra_objects.push 'appIcon.png.h'
 end
 
