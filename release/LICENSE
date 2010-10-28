@@ -12,8 +12,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-MDR uses the excellent Better String Library by Paul Hsieh. The following
-license applies to that library.
+MDR uses the excellent Better String Library (http://bstring.sourceforge.net/)
+by Paul Hsieh. The following license applies to that library.
 
 The Better String Library License
 ---------------------------------
