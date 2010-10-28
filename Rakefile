@@ -83,7 +83,9 @@ file 'Resources.o' => 'win/Resources.rc' do
 end
 
 file 'release/mdr.zip' => @release_exe do
-  sh 'zip release/mdr.zip release/*'
+  Dir.chdir 'release' do
+    sh 'zip mdr.zip *'
+  end
 end
 
 task :install => @release_exe do
