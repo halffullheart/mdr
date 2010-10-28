@@ -74,8 +74,8 @@ char * getHTML()
         int lineNoL = 0;
         int lineNoR = 0;
         int firstInfoLine = TRUE;
-        int startNewFileOk = FALSE;
-        int startOldFileOk = FALSE;
+        int startNewFileOk = TRUE;
+        int startOldFileOk = TRUE;
 
         // Map input lines to their output column (left, right, or both)
         int i;

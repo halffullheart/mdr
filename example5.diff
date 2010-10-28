@@ -1,0 +1,90 @@
+--- web/index.html	2010-10-22 19:45:20.000000000 -0700
++++ ../cymbal/baxter/index.html	2010-10-27 02:19:12.000000000 -0700
+@@ -1,14 +1,81 @@
+ <!DOCTYPE html>
+-<html>
+-<head>
+-  <meta charset="utf-8">
+-  <title>Diffs are hard to read</title>
+-  <link rel="stylesheet" href="css/style.css">
++<!--[if lt IE 7 ]> <html lang="en" class="ie6"> <![endif]-->
++<!--[if IE 7 ]>    <html lang="en" class="ie7"> <![endif]-->
++<!--[if IE 8 ]>    <html lang="en" class="ie8"> <![endif]-->
++<!--[if IE 9 ]>    <html lang="en" class="ie9"> <![endif]-->
++<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en"> <!--<![endif]-->
++<head> 
++  <meta charset="utf-8"> 
++ 
++  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame --> 
++  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
++ 
++  <title>SIGMA Spectrum Infusion System</title> 
++ 
++  <link rel="stylesheet" href="css/style.css?v=1"> 
++
+ </head>
++
+ <body>
+ 
++  <div id="container">
++
++    <div id="header">
++      <h1>The SIGMA Spectrum Infusion System</h1>
++      <h2>Intelligent Infusion Designed for Total Confidence</h1>
++      <a id="demo_button" href="form.html">Schedule a Live Demo</a>
++    </div>
++
++    <div id="nav">
++      <ul>
++        <li class="nav left">
++          <a href="why.html">Why SIGMA Spectrum</a>
++        </li>
++        <li class="nav middle">
++          <a href="demo.html">Interactive Demo</a>
++        </li>
++        <li class="nav right">
++          <a href="info.html">Product Features &amp; Information</a>
++        </li>
++      </ul>
++    </div>
++
++    <div id="main">
++
++      <div class="frame">
++        <div class="slide">
++        </div>
++      </div>
++
++      <div class="content">
++      </div> <!-- end .content -->
++
++    </div> <!-- end #main -->
++
++    <div id="footer">
++    </div>
++
++  </div> <!-- end #container -->
++
++  <div id="backglass" style="display:none;"><br></div>
++
++  <div id="demo_form" style="display:none;">
++    <br>
++    Form!
++    </br>
++  </div>
++
++  <!-- Javascript at the bottom for fast page loading -->
++
++  <!-- Grab Google CDN's jQuery. fall back to local if necessary -->
++  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
++  <script>!window.jQuery && document.write('<script src="js/jquery-1.4.3.min.js"><\/script>')</script>
++
++  <script src="js/script.js?v=1"></script>
++
+   <!--[if lt IE 7 ]>
+-    <script src="js/dd_belatedpng-0.0.8a.min.js"></script>
++    <script src="js/dd_belatedpng.js"></script>
+   <![endif]-->
++
+ </body>
+ </html>
