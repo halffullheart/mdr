@@ -4,6 +4,8 @@ require 'rbconfig'
 CLOBBER.include('mdr')
 CLOBBER.include('mdr.exe')
 CLOBBER.include('release/mdr')
+CLOBBER.include('release/mdr.exe')
+CLOBBER.include('release/mdr.zip')
 CLEAN.include('*.o')
 CLEAN.include('*.css.h')
 
@@ -41,6 +43,7 @@ end
 task :default => 'build'
 task :build => @dev_exe
 task :release => @release_exe
+task :package => 'release/mdr.zip'
 
 file @dev_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects do
   sh "gcc #{@dev_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@dev_exe}"
@@ -77,6 +80,10 @@ end
 
 file 'Resources.o' => 'win/Resources.rc' do
   sh 'windres win/Resources.rc Resources.o'
+end
+
+file 'release/mdr.zip' => @release_exe do
+  sh 'zip release/mdr.zip release/*'
 end
 
 task :install => @release_exe do
