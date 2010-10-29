@@ -11,15 +11,19 @@ html{color:#000;background:#FFF;}body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pr
 
 html {
     font-family: "Lucida Grande", Arial, Helvetica, sans-serif;
-    font-size: 15px;
+    font-size: 95%;
     background: #e6e6e0 url(../img/background.png);
     color: #362f2d;
 }
 
 body {
-    width: 40em;
-    padding: 30px;
+    width: 555px;
+    padding: 30px 40px;
     line-height: 1.4;
+}
+
+a {
+    color: #2e7ccc;
 }
 
 h1 {
@@ -31,14 +35,23 @@ h2 {
     font-size: 1.5em;
 }
 
+h1, h2 {
+    text-shadow: white 0 1px 0;
+}
+
 p {
     margin: 1em 0;
 }
 
 .example {
-    padding: 2px 4px 3px;
-    border-top: 1px solid #201c1a;
-    border-bottom: 1px solid #8c7f7c;
+    padding: 1px 4px 3px;
+    border: 1px solid #d0cec6;
+    border-bottom: 1px solid #f9f9f9;
     background: #362f2d url(../img/dark_background.png);
-    color: #e4d8d5;
+    color: #ebebe5;
+}
+
+.footer {
+    margin-top: 3em;
+    font-size: 0.8em;
 }
