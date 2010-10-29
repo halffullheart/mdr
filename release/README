@@ -21,10 +21,12 @@ The easiest way to use MDR is to pipe diff output from another program to it. Fo
 The same sort of thing works in any situation where you would otherwise be looking at diff output. Some other examples:
 
     $ hg diff | mdr
-    
+
     $ hg diff -r30:31 | mdr
-    
-    $ diff file1.txt file2.txt | mdr
-    
-    $ diff file1.txt file2.txt > changes.diff
+
+    $ diff -u file1.txt file2.txt | mdr
+
+You can also pipe in diff output that has been saved to a file:
+
+    $ diff -u file1.txt file2.txt > changes.diff
     $ mdr < changes.diff
