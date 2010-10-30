@@ -43,6 +43,25 @@ p {
     margin: 1em 0;
 }
 
+.download em {
+    font-weight: bold;
+    text-align: right:
+}
+
+.note {
+    background: #ffc8ab;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    color: #722903;
+    font-size: 0.8em;
+    padding: 6px 8px;
+}
+
+.note a {
+    color: red;
+}
+
 .example {
     padding: 1px 4px 3px;
     border: 1px solid #d0cec6;
