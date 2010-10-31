@@ -54,6 +54,7 @@ int main (int argc, const char * argv[])
     if (pid)
     {
         // Parent process just quits after fork.
+        free(html);
         return 0;
     }
     else
