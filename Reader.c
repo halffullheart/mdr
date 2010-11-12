@@ -125,15 +125,6 @@ char * getHTML()
                 }
                 firstInfoLine = FALSE;
             }
-            else if (stringStartsWith(inputLines->entry[i], "diff"))
-            {
-                type = HEADER;
-                lineNoL = 0;
-                lineNoR = 0;
-                firstInfoLine = TRUE;
-                startNewFileOk = TRUE;
-                startOldFileOk = TRUE;
-            }
             else if (bdata(inputLines->entry[i])[0] == '-')
             {
                 type = OLD;
@@ -149,6 +140,15 @@ char * getHTML()
                 type = SHARED;
                 useL = 1;
                 useR = 1;
+            }
+            else
+            {
+                type = HEADER;
+                lineNoL = 0;
+                lineNoR = 0;
+                firstInfoLine = TRUE;
+                startNewFileOk = TRUE;
+                startOldFileOk = TRUE;
             }
 
             // Balance.
