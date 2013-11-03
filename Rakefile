@@ -32,10 +32,10 @@ if RbConfig::CONFIG['host_vendor'] == 'apple'
     #'-arch ppc', # 32bit PPC
 
     # Base SDK, run `xcodebuild -sdk -version` to see possible options
-    '-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk',
+    '-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk',
 
     # Mac OS X Deployment Target
-    '-mmacosx-version-min=10.7',
+    '-mmacosx-version-min=10.8',
   ];
   @dev_flags.push mac_flags
   @release_flags.push mac_flags
