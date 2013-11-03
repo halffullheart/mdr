@@ -89,7 +89,9 @@ end
 
 file 'release/mdr.zip' => @release_exe do
   Dir.chdir 'release' do
+    sh 'cp ../README.md .' # Copy README into release dir so it will be in the zip.
     sh 'zip mdr.zip *'
+    sh 'rm README.md' # But don't leave it there.
   end
 end
 
