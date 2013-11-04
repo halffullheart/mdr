@@ -5,6 +5,10 @@
 #include <webkit/webkit.h>
 #include "../Reader.h"
 
+gboolean disabledContextMenu() {
+  return TRUE;
+}
+
 int main (int argc, char * argv[])
 {
 
@@ -45,6 +49,7 @@ int main (int argc, char * argv[])
         gtk_window_set_default_size(GTK_WINDOW(mainWin), 900, 600);
         gtk_window_set_title(GTK_WINDOW(mainWin), "mdr");
         g_signal_connect (mainWin, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+        g_signal_connect (webView, "context-menu", G_CALLBACK(disabledContextMenu), NULL);
         gtk_container_add(GTK_CONTAINER(mainWin), GTK_WIDGET(webView));
 
         html = getHTML();
