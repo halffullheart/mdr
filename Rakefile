@@ -40,7 +40,6 @@ if RbConfig::CONFIG['host_vendor'] == 'apple'
   @dev_flags.push mac_flags
   @release_flags.push mac_flags
   @release_flags.push '-03'
-  @extra_objects.push 'appIcon.png.h'
 end
 
 @release_exe = "release/#{@dev_exe}"
