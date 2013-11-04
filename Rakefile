@@ -45,7 +45,6 @@ end
 if RbConfig::CONFIG['host_vendor'] == 'unknown'
   @main_file = 'linux/MakeDiffReadable.c'
   linux_flags = [
-    `pkg-config --libs --cflags gtk+-3.0`.chomp,
     `pkg-config --libs --cflags webkit2gtk-3.0`.chomp
   ]
 
