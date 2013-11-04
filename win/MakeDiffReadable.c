@@ -36,7 +36,6 @@ int main (int argc, const char * argv[])
         html = getHTML();
     }
 
-    DWORD dwRetVal = 0;
     DWORD dwBytesWritten = 0;
     UINT uRetVal = 0;
 
@@ -45,7 +44,7 @@ int main (int argc, const char * argv[])
 
     HANDLE hTempFile = INVALID_HANDLE_VALUE;
 
-    dwRetVal = GetTempPath(MAX_PATH, lpTempPathBuffer);
+    GetTempPath(MAX_PATH, lpTempPathBuffer);
     uRetVal = GetTempFileName(lpTempPathBuffer, TEXT("MDR"), 0, szTempFileName);
 
     snprintf(szTempFileName, MAX_PATH, "%s.hta", szTempFileName);
