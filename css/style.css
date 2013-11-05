@@ -15,6 +15,7 @@ tr {
 td {
     padding: 0;
     vertical-align: top;
+    white-space: pre;
 }
 .line {
     color: #888;
