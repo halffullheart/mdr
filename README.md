@@ -34,11 +34,13 @@ You can also pipe in diff output that has been saved to a file:
 Development
 -----------
 
-### Mac
+### Mac and Linux
 
 #### Setup
 
-Install the Xcode developer tools and you should be ready to go.
+On Mac, install the Xcode developer tools and you should be ready to go.
+
+On Linux, install GTK WebKit2 bindings. On Ubuntu they are available in the `libwebkitgtk-dev` package. On ArchLinux you'll find them in the `webkitgtk` package.
 
 #### Build
 

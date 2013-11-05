@@ -4,8 +4,14 @@
 #include "bstrlib.h"
 
 #define ALIGN_GAP -1
+
+#ifndef TRUE
 #define TRUE 1
+#endif
+
+#ifndef FALSE
 #define FALSE 0
+#endif
 
 enum side {
     RIGHT,

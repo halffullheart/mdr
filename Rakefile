@@ -42,6 +42,17 @@ if RbConfig::CONFIG['host_vendor'] == 'apple'
   @release_flags.push '-03'
 end
 
+if RbConfig::CONFIG['host_vendor'] == 'unknown'
+  @main_file = 'linux/MakeDiffReadable.c'
+  linux_flags = [
+    `pkg-config --libs --cflags webkit2gtk-3.0`.chomp
+  ]
+
+  @dev_flags.push linux_flags
+  @release_flags.push linux_flags
+  @release_flags.push '-O3'
+end
+
 @release_exe = "release/#{@dev_exe}"
 
 task :default => 'build'
