@@ -8,6 +8,7 @@ CLOBBER.include('release/mdr.exe')
 CLOBBER.include('release/mdr.zip')
 CLEAN.include('*.o')
 CLEAN.include('*.css.h')
+CLEAN.include('*.png.h')
 
 @dev_exe = 'mdr'
 @dev_flags = %w{-Wall -g}
@@ -68,7 +69,7 @@ file @release_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects do
   sh "gcc #{@release_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@release_exe}"
 end
 
-file 'Reader.o' => ['Reader.c', 'style.css.h', 'Reader.h'] do
+file 'Reader.o' => ['Reader.c', 'style.css.h', 'appIcon.png.h', 'Reader.h'] do
   sh "gcc #{@dev_flags.join ' '} -c Reader.c"
 end
 
