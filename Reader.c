@@ -348,11 +348,6 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
                 breplace(content, position, 1, bfromcstr("&gt;"), ' ');
                 advanceBy += 3;
             }
-            else if (content->data[position] == ' ')
-            {
-                breplace(content, position, 1, bfromcstr("&emsp;"), ' ');
-                advanceBy += 5;
-            }
 
             if (highlightMask[i] != lastState)
             {
@@ -376,12 +371,11 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
     // Escape HTML.
     // TODO: This can't possibly be good enough.
     bfindreplace(content, bfromcstr("&"), bfromcstr("&amp;"), position);
-    bfindreplace(content, bfromcstr(" "), bfromcstr("&emsp;"), position);
     bfindreplace(content, bfromcstr("<"), bfromcstr("&lt;"), position);
     bfindreplace(content, bfromcstr(">"), bfromcstr("&gt;"), position);
 
     // Put something in blank lines.
-    if (content->slen == 0) bcatcstr(content, "&emsp;");
+    if (content->slen == 0) bcatcstr(content, "&#32;");
 
     if (needToCloseLastHighlightBeforeEscapingHTML)
     {
@@ -424,17 +418,17 @@ void createLine(int side, bstring base, bstring content, lineData lineMap, int *
 
 bstring getWhitespace(int spaces)
 {
-    bstring whitespace = bfromcstralloc(spaces * 6, "");
-    while (whitespace->slen < spaces * 6)
+    bstring whitespace = bfromcstralloc(spaces * 5, "");
+    while (whitespace->slen < spaces * 5)
     {
-        bcatcstr(whitespace, "&emsp;");
+        bcatcstr(whitespace, "&#32;");
     }
     return whitespace;
 }
 
 void createEmptyLine(bstring base)
 {
-    bcatcstr(base, "<td class='line_number'>&emsp;</td><td class='line empty'>&emsp;</td>\n");
+    bcatcstr(base, "<td class='line_number'> </td><td class='line empty'> </td>\n");
 }
 
 char * typeString(enum lineType type)
@@ -465,7 +459,7 @@ char * lineNumberString(int lineNo)
         exit(-1);
     }
     if (lineNo <= 0) {
-        strcpy(s, "&emsp;");
+        strcpy(s, "&#32;");
     } else {
         snprintf(s, 100, "%i", lineNo);
     }
