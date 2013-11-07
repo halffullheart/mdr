@@ -8,12 +8,19 @@ CLOBBER.include('release/mdr.exe')
 CLOBBER.include('release/mdr.zip')
 CLEAN.include('*.o')
 CLEAN.include('*.css.h')
+CLEAN.include('*.png.h')
 
 @dev_exe = 'mdr'
 @dev_flags = %w{-Wall -g}
 @release_flags = []
 @exe_flags = []
+
+# Files that are dependencies and are fed to compiler
 @extra_objects = []
+
+# Files that are dependencies but must only be build and do not have to be fed
+# to compiler explicitly.
+@extra_deps = []
 
 @system = case RbConfig::CONFIG['host_os']
   when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
@@ -53,6 +60,7 @@ if @system == :macosx
   @dev_flags.push mac_flags
   @release_flags.push mac_flags
   @release_flags.push '-03'
+  @extra_deps.push 'appIcon.png.h'
 end
 
 if @system == :linux
@@ -73,8 +81,8 @@ task :build => @dev_exe
 task :release => @release_exe
 task :package => 'release/mdr.zip'
 
-file @dev_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects do
-  sh "gcc #{@dev_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@dev_exe}"
+file @dev_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects + @extra_deps do
+  sh "gcc bstrlib.o Reader.o #{@main_file} #{@dev_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} -o #{@dev_exe}"
 end
 
 file @release_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects do
