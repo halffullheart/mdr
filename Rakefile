@@ -89,7 +89,7 @@ file @release_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects do
   sh "gcc #{@release_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@release_exe}"
 end
 
-file 'Reader.o' => ['Reader.c', 'style.css.h', 'Reader.h'] do
+file 'Reader.o' => ['Reader.c', 'style.css.h', 'appIcon.png.h', 'Reader.h'] do
   sh "gcc #{@dev_flags.join ' '} -c Reader.c"
 end
 
