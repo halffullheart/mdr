@@ -37,7 +37,6 @@ int main (int argc, const char * argv[])
     }
 
     DWORD dwBytesWritten = 0;
-    UINT uRetVal = 0;
 
     TCHAR lpTempPathBuffer[MAX_PATH];
     TCHAR szTempFileName[MAX_PATH];
@@ -45,7 +44,7 @@ int main (int argc, const char * argv[])
     HANDLE hTempFile = INVALID_HANDLE_VALUE;
 
     GetTempPath(MAX_PATH, lpTempPathBuffer);
-    uRetVal = GetTempFileName(lpTempPathBuffer, TEXT("MDR"), 0, szTempFileName);
+    GetTempFileName(lpTempPathBuffer, TEXT("MDR"), 0, szTempFileName);
 
     snprintf(szTempFileName, MAX_PATH, "%s.hta", szTempFileName);
 
