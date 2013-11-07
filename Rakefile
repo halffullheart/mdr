@@ -15,13 +15,26 @@ CLEAN.include('*.css.h')
 @exe_flags = []
 @extra_objects = []
 
-if RbConfig::CONFIG['host_vendor'] == 'pc'
+@system = case RbConfig::CONFIG['host_os']
+  when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+    :windows
+  when /darwin|mac os/
+    :macosx
+  when /linux/
+    :linux
+  when /solaris|bsd/
+    :unix
+  else
+    raise "Unknown OS: #{host_os.inspect}"
+  end
+
+if @system == :windows
   @main_file = 'win/MakeDiffReadable.c'
   @dev_exe = 'mdr.exe'
   @extra_objects.push 'Resources.o'
 end
 
-if RbConfig::CONFIG['host_vendor'] == 'apple'
+if @system == :macosx
   @main_file = 'mac/MakeDiffReadable.m'
   @exe_flags = [
     '-framework Cocoa',
@@ -42,7 +55,7 @@ if RbConfig::CONFIG['host_vendor'] == 'apple'
   @release_flags.push '-03'
 end
 
-if RbConfig::CONFIG['host_vendor'] == 'unknown'
+if @system == :linux
   @main_file = 'linux/MakeDiffReadable.c'
   linux_flags = [
     `pkg-config --libs --cflags webkit2gtk-3.0`.chomp
