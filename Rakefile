@@ -72,6 +72,7 @@ if @system == :linux
   @dev_flags.push linux_flags
   @release_flags.push linux_flags
   @release_flags.push '-O3'
+  @extra_deps.push 'appIcon.png.h'
 end
 
 @release_exe = "release/#{@dev_exe}"
