@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <gtk/gtk.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 #include "../Reader.h"
 #include "../appIcon.png.h"
 
@@ -65,12 +65,14 @@ int main (int argc, char * argv[])
     else
     {
         GtkWidget *mainWin;
+        GtkWidget *scrolledWindow;
         GdkPixbuf *appIcon;
         WebKitWebView *webView;
 
         gtk_init(&argc, &argv);
 
         mainWin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+        scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
         webView = WEBKIT_WEB_VIEW(webkit_web_view_new());
         appIcon = buildApplicationIcon();
 
@@ -79,10 +81,11 @@ int main (int argc, char * argv[])
         gtk_window_set_icon(GTK_WINDOW(mainWin), appIcon);
         g_signal_connect (mainWin, "destroy", G_CALLBACK(gtk_main_quit), NULL);
         g_signal_connect (webView, "context-menu", G_CALLBACK(disabledContextMenu), NULL);
-        gtk_container_add(GTK_CONTAINER(mainWin), GTK_WIDGET(webView));
+        gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(webView));
+        gtk_container_add(GTK_CONTAINER(mainWin), scrolledWindow);
 
         html = getHTML();
-        webkit_web_view_load_html(webView, html, NULL);
+        webkit_web_view_load_html_string(webView, html, NULL);
 
         gtk_widget_grab_focus(GTK_WIDGET(webView));
         gtk_widget_show_all(mainWin);
