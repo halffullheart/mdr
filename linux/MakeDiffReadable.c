@@ -65,7 +65,7 @@ int main (int argc, char * argv[])
     else
     {
         GtkWidget *mainWin;
-        GtkWidget *scrolledWindow;
+        GtkWidget *scrolledWindow; // TODO: remove when switching to webkit2
         GdkPixbuf *appIcon;
         WebKitWebView *webView;
 
