@@ -8,7 +8,7 @@
 
 char * getVersion()
 {
-    return "mdr 1.0b1\n";
+    return "mdr 1.0.0-beta.2\n";
 }
 
 char * getHelp()
