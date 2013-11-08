@@ -85,7 +85,7 @@ file @dev_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects + @extra
   sh "gcc bstrlib.o Reader.o #{@main_file} #{@dev_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} -o #{@dev_exe}"
 end
 
-file @release_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects do
+file @release_exe => [@main_file, 'Reader.o', 'bstrlib.o'] + @extra_objects + @extra_deps do
   sh "gcc #{@release_flags.join ' '} #{@exe_flags.join ' '} #{@extra_objects.join ' '} bstrlib.o Reader.o #{@main_file} -o #{@release_exe}"
 end
 
