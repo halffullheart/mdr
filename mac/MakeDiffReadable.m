@@ -189,6 +189,7 @@ int main (int argc, const char * argv[])
     id webView = [[[WebView alloc] initWithFrame:startingWindowSize] autorelease];
     [window setContentView:webView];
     [[webView mainFrame] loadHTMLString:displayContent baseURL: nil];
+    [window makeFirstResponder:webView];
 
     [windowList addObject:window];
     return YES;
