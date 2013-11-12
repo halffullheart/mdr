@@ -67,17 +67,14 @@ int main (int argc, const char * argv[])
         free(html);
 
         id connectionName = @"com.halffullheart.mdr.diffserverconnection";
-
-        NSProxy * proxy = [[NSConnection rootProxyForConnectionWithRegisteredName:connectionName host:nil] autorelease];
+        NSConnection * connection = [[NSConnection connectionWithRegisteredName:connectionName host:nil] autorelease];
+        NSProxy * proxy = [[connection rootProxy] autorelease];
 
         if (proxy)
         {
-            //NSLog(@"Client mode.");
             // Connected to server - act as client.
-            BOOL result = [(MDRServer *)proxy showWindowWithContent:displayContent];
-            if (result) {
-                //NSLog(@"Server says it's okay");
-            }
+            [(MDRServer *)proxy showWindowWithContent:displayContent];
+            [connection invalidate];
             [pool drain];
         }
         else
