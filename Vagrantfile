@@ -13,7 +13,7 @@ Vagrant.configure('2') do |config|
     apt-get install -y gnome-shell
     apt-get install -y ubuntu-desktop
     apt-get install -y unity-2d
-    apt-get install -y libwebkitgtk-dev
+    apt-get install -y libwebkitgtk-3.0-dev
 
     gem install rake
   )
