@@ -42,18 +42,6 @@ On Mac, install the Xcode developer tools and you should be ready to go.
 
 On Linux, install GTK WebKit2 bindings. On Ubuntu they are available in the `libwebkitgtk-dev` package. On ArchLinux you'll find them in the `webkitgtk` package.
 
-#### Ubuntu Linux via Vagrant
-
-Prerequisites: [Vagrant](http://vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/).
-
-**Note that this currently fails due to issue #21** but it would look something like this:
-
-    vagrant up
-    vagrant ssh
-    cd /vagrant
-    rake
-
-
 #### Build
 
     rake
@@ -97,3 +85,16 @@ To actually build mdr:
     rake
 
 You can also run `rake clobber` and `rake clean`
+
+### Ubuntu Linux via Vagrant
+
+These instructions are useful if you are not running Linux but would like to build a Linux binary on your platform.
+
+Prerequisites: [Vagrant](http://vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/).
+
+**Note that this currently fails due to issue #21** but it would look something like this:
+
+    vagrant up
+    vagrant ssh
+    cd /vagrant
+    rake
