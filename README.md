@@ -40,7 +40,7 @@ Development
 
 On Mac, install the Xcode developer tools and you should be ready to go.
 
-On Linux, install GTK WebKit2 bindings. On Ubuntu they are available in the `libwebkitgtk-dev` package. On ArchLinux you'll find them in the `webkitgtk` package.
+On Linux, install WebKitGTK+ and GTK+ 3 development headers. On Ubuntu they are available in the `libwebkitgtk-3.0-dev` package. On ArchLinux you'll find them in the `webkitgtk` package.
 
 #### Build
 

@@ -66,7 +66,7 @@ end
 if @system == :linux
   @main_file = 'linux/MakeDiffReadable.c'
   linux_flags = [
-    `pkg-config --libs --cflags webkit2gtk-3.0`.chomp
+    `pkg-config --libs --cflags webkitgtk-3.0`.chomp
   ]
 
   @dev_flags.push linux_flags
