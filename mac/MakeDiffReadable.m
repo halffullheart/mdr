@@ -120,6 +120,15 @@ int main (int argc, const char * argv[])
             [fileMenu addItem:closeWindowItem];
             [fileMenuItem setSubmenu:fileMenu];
 
+            // Edit menu.
+            id editMenuItem = [[NSMenuItem new] autorelease];
+            [menubar addItem:editMenuItem];
+            id editMenu = [[[NSMenu alloc] initWithTitle:@"Edit"] autorelease];
+            id copyMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Copy"
+                action:@selector(copy:) keyEquivalent:@"c"] autorelease];
+            [editMenu addItem:copyMenuItem];
+            [editMenuItem setSubmenu:editMenu];
+
             // Window menu.
             id windowMenuItem = [[NSMenuItem new] autorelease];
             [menubar addItem:windowMenuItem];
