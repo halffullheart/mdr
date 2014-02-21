@@ -11,6 +11,12 @@ Installation
 
 All you need is the mdr executable (mdr.exe on Windows). Move or copy it to a place where you like to keep executables. I like to use ~/bin. Make sure this location is in your PATH.
 
+### Mac OS X
+
+```
+$ brew install mdr
+```
+
 Use
 ---
 
