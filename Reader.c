@@ -22,7 +22,21 @@ char * getHelp()
            "  hg diff | mdr\n";
 }
 
-char * getHTML()
+char * getHtmlFromStdIn()
+{
+    bstring diffContents = getStdInContents();
+    char * html = getHtmlFromDiff(diffContents);
+    bdestroy(diffContents);
+    return html;
+}
+
+bstring getStdInContents()
+{
+    // Read from stdin
+    return bread((bNread)fread, stdin);
+}
+
+char * getHtmlFromDiff(bstring diffContents)
 {
     bstring html = bfromcstr("<!DOCTYPE html>\n<html>\n");
     balloc(html, style_css_len);
@@ -34,16 +48,9 @@ char * getHTML()
     bcatcstr(html, "</head>");
     bcatcstr(html, "<body>\n<table cellpadding='0'>\n");
 
-    // Read from stdin
-    bstring stdinContents = bread ((bNread) fread, stdin);
-    if (stdinContents == NULL)
-    {
-        return "There was an error reading from stdin.";
-    }
-
     // Split into lines
     struct bstrList * inputLines;
-    if ((inputLines = bsplit(stdinContents, '\n')) != NULL)
+    if ((inputLines = bsplit(diffContents, '\n')) != NULL)
     {
 
         // We are going to build a map showing which lines in the input belong
@@ -288,7 +295,6 @@ char * getHTML()
         free(lineMapR);
     }
 
-    bdestroy(stdinContents);
     bstrListDestroy(inputLines);
 
     char * result = bstr2cstr(html, '-');

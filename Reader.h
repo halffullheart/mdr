@@ -54,7 +54,11 @@ char * getVersion();
 
 char * getHelp();
 
-char * getHTML();
+char * getHtmlFromStdIn();
+
+bstring getStdInContents();
+
+char * getHtmlFromDiff(bstring diffContents);
 
 bstring getContentFromLine(bstring, int, int *);
 

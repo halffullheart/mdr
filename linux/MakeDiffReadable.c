@@ -44,7 +44,7 @@ int main (int argc, char * argv[])
     {
         if (strcmp(argv[1], "--html") == 0)
         {
-            html = getHTML();
+            html = getHtmlFromStdIn();
             printf("%s", html);
             free(html);
         }
@@ -84,7 +84,7 @@ int main (int argc, char * argv[])
         gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(webView));
         gtk_container_add(GTK_CONTAINER(mainWin), scrolledWindow);
 
-        html = getHTML();
+        html = getHtmlFromStdIn();
         webkit_web_view_load_html_string(webView, html, NULL);
 
         gtk_widget_grab_focus(GTK_WIDGET(webView));

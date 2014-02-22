@@ -13,7 +13,7 @@ int main (int argc, const char * argv[])
     {
         if (strcmp(argv[1], "--html") == 0)
         {
-            html = getHTML();
+            html = getHtmlFromStdIn();
             printf("%s", html);
             free(html);
         }
@@ -33,7 +33,7 @@ int main (int argc, const char * argv[])
     }
     else
     {
-        html = getHTML();
+        html = getHtmlFromStdIn();
     }
 
     DWORD dwBytesWritten = 0;

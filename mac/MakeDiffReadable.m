@@ -25,7 +25,7 @@ int main (int argc, const char * argv[])
     {
         if (strcmp(argv[1], "--html") == 0)
         {
-            html = getHTML();
+            html = getHtmlFromStdIn();
             printf("%s", html);
             free(html);
         }
@@ -45,9 +45,10 @@ int main (int argc, const char * argv[])
     }
     else
     {
-        // Calling getHTML will grab text from stdin. We want to do this before
-        // we fork in case there isn't any so the user can enter it manually.
-        html = getHTML();
+        // Calling getHtmlFromStdIn() will grab text from stdin. We want to do
+        // this before we fork in case there isn't any so the user can enter
+        // it manually.
+        html = getHtmlFromStdIn();
     }
 
     pid_t pid = fork();
