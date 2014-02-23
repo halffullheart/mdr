@@ -32,7 +32,7 @@ CLEAN.include('*.png.h')
   when /solaris|bsd/
     :unix
   else
-    raise "Unknown OS: #{host_os.inspect}"
+    raise "Unknown OS"
   end
 
 if @system == :windows
@@ -48,7 +48,7 @@ if @system == :macosx
     '-framework WebKit'
   ]
   mac_flags = [
-    '-arch i386', # 32bit Intel
+    #'-arch i386', # 32bit Intel
     #'-arch ppc', # 32bit PPC
 
     # Base SDK, run `xcodebuild -sdk -version` to see possible options
