@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
-#include "../Reader.h"
+#include "../mdr.h"
 
 int main (int argc, const char * argv[])
 {

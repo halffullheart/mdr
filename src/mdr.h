@@ -1,5 +1,5 @@
-#ifndef READER_H
-#define READER_H
+#ifndef MDR_H
+#define MDR_H
 
 #include "bstrlib.h"
 

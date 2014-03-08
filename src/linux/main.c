@@ -3,8 +3,8 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
-#include "../Reader.h"
-#include "../appIcon.png.h"
+#include "../mdr.h"
+#include APPICON_PNG_H
 
 gboolean disabledContextMenu() {
   return TRUE;

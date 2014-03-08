@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Reader.h"
+#include "mdr.h"
+#include "version.h"
 #include "bstrlib.h"
-#include "style.css.h"
+#include STYLE_CSS_H
 
 char * getVersion()
 {
-    return "mdr 1.0.0\n";
+    return MDR_APP_NAME " " MDR_VERSION_STR "\n";
 }
 
 char * getHelp()
