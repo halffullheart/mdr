@@ -4,7 +4,7 @@
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 #include "../mdr.h"
-#include APPICON_PNG_H
+#include "appIcon.png.h"
 
 gboolean disabledContextMenu() {
   return TRUE;

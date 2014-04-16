@@ -13,12 +13,12 @@
 #define FALSE 0
 #endif
 
-enum side {
+typedef enum side {
     RIGHT,
     LEFT
-};
+} side;
 
-enum lineType {
+typedef enum lineType {
     SHARED,
     OLD,
     NEW,
@@ -28,13 +28,13 @@ enum lineType {
     INFO,
     OLD_FILE,
     NEW_FILE
-};
+} lineType;
 
-enum highlightMaskValue {
+typedef enum highlightMask {
     MASK_SAME,
     MASK_DIFFERENT,
     MASK_GAP
-};
+} highlightMask;
 
 typedef struct {
     enum lineType type;
@@ -62,7 +62,7 @@ char * getHtmlFromDiff(bstring diffContents);
 
 bstring getContentFromLine(bstring, int, int *);
 
-void createLine(int, bstring, bstring, lineData, int *);
+void createLine(int, bstring, bstring, lineData, highlightMask *);
 
 bstring getWhitespace(int);
 
@@ -74,9 +74,9 @@ char * lineNumberString(int);
 
 void syncLineNumbers(bstring, int *, int *);
 
-void determineLineHighlighting(bstring, bstring, int **, int **);
+void determineLineHighlighting(bstring, bstring, highlightMask **, highlightMask **);
 
-int compareStringPositions(seq, seq, int);
+highlightMask compareStringPositions(seq, seq, int);
 
 void determineAlignment(seq, seq, int (*compare)(seq, seq, int, int), seq *, seq *);
 

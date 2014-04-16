@@ -2,7 +2,7 @@
 #import <WebKit/WebKit.h>
 #import <unistd.h>
 #import "../mdr.h"
-#import APPICON_PNG_H
+#import "appIcon.png.h"
 
 @interface MDRApplicationDelegate : NSObject
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) sender;

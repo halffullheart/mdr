@@ -5,7 +5,7 @@
 #include "mdr.h"
 #include "version.h"
 #include "bstrlib.h"
-#include STYLE_CSS_H
+#include "style.css.h"
 
 char * getVersion()
 {
@@ -219,8 +219,8 @@ char * getHtmlFromDiff(bstring diffContents)
         // Now we do the formatting work based on the map.
         for (i = 0; i < lineMapPosL; i++)
         {
-            int * highlightMaskA = NULL;
-            int * highlightMaskB = NULL;
+            highlightMask * highlightMaskA = NULL;
+            highlightMask * highlightMaskB = NULL;
             bstring contentL;
             bstring contentR;
             int leadingSpacesL = 0;
@@ -318,7 +318,7 @@ bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpac
     return content;
 }
 
-void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask)
+void createLine(int side, bstring base, bstring content, lineData lineMap, highlightMask * highlightMask)
 {
     if (lineMap.type == INFO)
     {
@@ -478,7 +478,7 @@ void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
     sscanf(bstr2cstr(infoString, ' '), "@@ -%d,%*d +%d,%*d", lineNoL, lineNoR);
 }
 
-void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB)
+void determineLineHighlighting(bstring a, bstring b, highlightMask ** maskPtrA, highlightMask ** maskPtrB)
 {
     seq alignA = initSeq(a->slen * 1.5);
     seq alignB = initSeq(b->slen * 1.5);
@@ -495,7 +495,7 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     // one, which should be the upper limit needed for the masks.
 
     // Allocate memory for two integer masks.
-    int * maskA = malloc(len * sizeof(int));
+    highlightMask * maskA = malloc(len * sizeof(highlightMask));
     if (maskA == NULL)
     {
         free(maskA);
@@ -503,7 +503,7 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
         exit(-1);
     }
 
-    int * maskB = malloc(len * sizeof(int));
+    highlightMask * maskB = malloc(len * sizeof(highlightMask));
     if (maskB == NULL)
     {
         free(maskB);
@@ -592,9 +592,9 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     freeSeq(&alignB);
 }
 
-int compareStringPositions(seq seqA, seq seqB, int i)
+highlightMask compareStringPositions(seq seqA, seq seqB, int i)
 {
-    int result = MASK_GAP;
+    highlightMask result = MASK_GAP;
 
     if (seqA.val[i] == ALIGN_GAP)
     {

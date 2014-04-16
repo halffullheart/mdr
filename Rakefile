@@ -1,6 +1,14 @@
 require 'rake/clean'
+require 'rake/testtask'
 require 'rbconfig'
 require 'fileutils'
+
+# Unity stuff
+UNITY_ROOT = File.expand_path('vendor/unity') + '/'
+require UNITY_ROOT + 'rakefile_helper'
+include RakefileHelpers
+DEFAULT_CONFIG_FILE = 'gcc_32.yml'
+configure_toolchain(DEFAULT_CONFIG_FILE)
 
 # Some quick definitions:
 #   System = mac, linux, windows, etc.
@@ -28,8 +36,11 @@ BIN_EXT     = SYSTEM == :windows ? '.exe' : ''
 BIN         = BIN_NAME + BIN_EXT
 BIN_PATHS   = TARGETS.map { |t| { t => File.join(BUILD_PATH, t.to_s, BIN) } }.reduce(&:merge)
 TMP_PATHS   = TARGETS.map { |t| { t => File.join(BUILD_PATH, t.to_s, TMP) } }.reduce(&:merge)
-CFLAGS      = Hash.new([])
-LFLAGS      = Hash.new([])
+CFLAGS      = TARGETS.map { |t| { t => ["-I#{ TMP_PATHS[t] }"] } }.reduce(&:merge)
+LFLAGS      = TARGETS.map { |t| { t => ["-I#{ TMP_PATHS[t] }"] } }.reduce(&:merge)
+
+CFLAGS[:all] = %w( -I. )
+LFLAGS[:all] = %w( -I. )
 
 def src(*f)
   File.join(SRC_PATH, *f)
@@ -47,19 +58,7 @@ def lflags(target)
   (LFLAGS[:all] + LFLAGS[target]).join(' ')
 end
 
-def header_case(filename)
-  filename.gsub(/[\.\/-]/, '_').upcase
-end
-
-def mktmp(target)
-  FileUtils.mkdir_p(tmp(target))
-end
-
-
-CFLAGS[:all] += %w( -I. )
 CFLAGS[:dev] += %w( -Wall -g )
-
-LFLAGS[:all] += %w( -I. )
 
 CLOBBER.include(BIN_PATHS.values)
 CLEAN.include(TMP_PATHS.values.map { |p| File.join(p, '**') })
@@ -103,16 +102,16 @@ if SYSTEM == :linux
   extra_headers   += ['appIcon.png.h']
 end
 
-task :default => :build
-task :build   => BIN_PATHS[:dev]
-task :release => BIN_PATHS[:release]
-#task :package => 'release/mdr.zip'
+task :default     => :build
+task :build       => BIN_PATHS[:dev]
+task :release     => BIN_PATHS[:release]
+
+task :test do
+  run_tests get_unit_test_files
+end
 
 TARGETS.each do |target|
-  # Add flags defining all the extra header locations.
-  define_header_flags = extra_headers.map { |h| %(-D#{ header_case(h) }=\\"#{ tmp(target, h) }\\") }
-  CFLAGS[target] += define_header_flags
-  LFLAGS[target] += define_header_flags
+  directory(tmp(target))
 
   linked = ['mdr.o', 'bstrlib.o']
   deps = (linked + extra_objects + extra_headers).map { |f| tmp(target, f) }
@@ -125,24 +124,20 @@ TARGETS.each do |target|
     sh "gcc #{ cflags(target) } -c #{ src('mdr.c') } -o #{ tmp(target, 'mdr.o') }"
   end
 
-  file tmp(target, 'bstrlib.o') => [src('bstrlib.c'), src('bstrlib.h')] do
-    mktmp(target)
+  file tmp(target, 'bstrlib.o') => [src('bstrlib.c'), src('bstrlib.h'), tmp(target)] do
     # define BSTRLIB_NOVSNP macro because system may not support vsnprintf, and we don’t need it.
     sh "gcc #{ cflags(target) } -c #{ src('bstrlib.c') } -o #{ tmp(target, 'bstrlib.o') } -DBSTRLIB_NOVSNP"
   end
 
-  file tmp(target, 'appIcon.png.h') => src('appIcon.png') do
-    mktmp(target)
+  file tmp(target, 'appIcon.png.h') => [src('appIcon.png'), tmp(target)] do
     sh "xxd -i #{ src('appIcon.png') } | sed 's/src_//g' > #{ tmp(target, 'appIcon.png.h') }"
   end
 
-  file tmp(target, 'style.css.h') => src('style.css') do
-    mktmp(target)
+  file tmp(target, 'style.css.h') => [src('style.css'), tmp(target)] do
     sh "xxd -i #{ src('style.css') } | sed 's/src_//g' > #{ tmp(target, 'style.css.h') }"
   end
 
-  file tmp(target, 'Resources.o') => [src('windows', 'Resources.rc'), src('version.h')] do
-    mktmp(target)
+  file tmp(target, 'Resources.o') => [src('windows', 'Resources.rc'), src('version.h'), tmp(target)] do
     sh "windres #{ src('windows', 'Resources.rc') } #{ tmp(target, 'Resources.o') }"
   end
 

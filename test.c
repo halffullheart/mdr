@@ -73,8 +73,8 @@ int main()
     assert(seq4out.val[1] == ALIGN_GAP);
     assert(seq4out.val[2] == 'C');
 
-    int * mask3 = NULL;
-    int * mask4 = NULL;
+    highlightMask * mask3 = NULL;
+    highlightMask * mask4 = NULL;
     determineLineHighlighting(str3, str4, &mask3, &mask4);
     assert(mask3[0] == MASK_SAME);
     assert(mask3[5] == MASK_DIFFERENT);
