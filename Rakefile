@@ -83,7 +83,7 @@ if SYSTEM == :mac
   sdk_path = %x{xcodebuild -sdk -version}.each_line.find do |line|
     line.start_with?('Path:') && (line.include? 'MacOSX')
   end.split(' ').last.chomp
-  
+
   LFLAGS[:all] += [
     '-framework Cocoa',
     '-framework WebKit',
@@ -98,7 +98,7 @@ if SYSTEM == :mac
     '-mmacosx-version-min=10.8',
   ]
   CFLAGS[:release] += ['-O3']
-  extra_headers   += ['appIcon.png.h']
+  extra_headers    += ['appIcon.png.h']
 end
 
 if SYSTEM == :linux
