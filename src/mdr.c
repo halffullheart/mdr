@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Reader.h"
+#include "mdr.h"
+#include "version.h"
 #include "bstrlib.h"
 #include "style.css.h"
 
 char * getVersion()
 {
-    return "mdr 1.0.0\n";
+    return MDR_APP_NAME " " MDR_VERSION_STR "\n";
 }
 
 char * getHelp()
@@ -22,7 +23,21 @@ char * getHelp()
            "  hg diff | mdr\n";
 }
 
-char * getHTML()
+char * getHtmlFromStdIn()
+{
+    bstring diffContents = getStdInContents();
+    char * html = getHtmlFromDiff(diffContents);
+    bdestroy(diffContents);
+    return html;
+}
+
+bstring getStdInContents()
+{
+    // Read from stdin
+    return bread((bNread)fread, stdin);
+}
+
+char * getHtmlFromDiff(bstring diffContents)
 {
     bstring html = bfromcstr("<!DOCTYPE html>\n<html>\n");
     balloc(html, style_css_len);
@@ -34,16 +49,9 @@ char * getHTML()
     bcatcstr(html, "</head>");
     bcatcstr(html, "<body>\n<table cellpadding='0'>\n");
 
-    // Read from stdin
-    bstring stdinContents = bread ((bNread) fread, stdin);
-    if (stdinContents == NULL)
-    {
-        return "There was an error reading from stdin.";
-    }
-
     // Split into lines
     struct bstrList * inputLines;
-    if ((inputLines = bsplit(stdinContents, '\n')) != NULL)
+    if ((inputLines = bsplit(diffContents, '\n')) != NULL)
     {
 
         // We are going to build a map showing which lines in the input belong
@@ -211,8 +219,8 @@ char * getHTML()
         // Now we do the formatting work based on the map.
         for (i = 0; i < lineMapPosL; i++)
         {
-            int * highlightMaskA = NULL;
-            int * highlightMaskB = NULL;
+            highlightMask * highlightMaskA = NULL;
+            highlightMask * highlightMaskB = NULL;
             bstring contentL;
             bstring contentR;
             int leadingSpacesL = 0;
@@ -288,7 +296,6 @@ char * getHTML()
         free(lineMapR);
     }
 
-    bdestroy(stdinContents);
     bstrListDestroy(inputLines);
 
     char * result = bstr2cstr(html, '-');
@@ -311,7 +318,7 @@ bstring getContentFromLine(bstring line, int formatPaddingLen, int * leadingSpac
     return content;
 }
 
-void createLine(int side, bstring base, bstring content, lineData lineMap, int * highlightMask)
+void createLine(int side, bstring base, bstring content, lineData lineMap, highlightMask * highlightMask)
 {
     if (lineMap.type == INFO)
     {
@@ -471,7 +478,7 @@ void syncLineNumbers(bstring infoString, int * lineNoL, int * lineNoR)
     sscanf(bstr2cstr(infoString, ' '), "@@ -%d,%*d +%d,%*d", lineNoL, lineNoR);
 }
 
-void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** maskPtrB)
+void determineLineHighlighting(bstring a, bstring b, highlightMask ** maskPtrA, highlightMask ** maskPtrB)
 {
     seq alignA = initSeq(a->slen * 1.5);
     seq alignB = initSeq(b->slen * 1.5);
@@ -488,7 +495,7 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     // one, which should be the upper limit needed for the masks.
 
     // Allocate memory for two integer masks.
-    int * maskA = malloc(len * sizeof(int));
+    highlightMask * maskA = malloc(len * sizeof(highlightMask));
     if (maskA == NULL)
     {
         free(maskA);
@@ -496,7 +503,7 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
         exit(-1);
     }
 
-    int * maskB = malloc(len * sizeof(int));
+    highlightMask * maskB = malloc(len * sizeof(highlightMask));
     if (maskB == NULL)
     {
         free(maskB);
@@ -585,9 +592,9 @@ void determineLineHighlighting(bstring a, bstring b, int ** maskPtrA, int ** mas
     freeSeq(&alignB);
 }
 
-int compareStringPositions(seq seqA, seq seqB, int i)
+highlightMask compareStringPositions(seq seqA, seq seqB, int i)
 {
-    int result = MASK_GAP;
+    highlightMask result = MASK_GAP;
 
     if (seqA.val[i] == ALIGN_GAP)
     {

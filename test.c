@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "Reader.h"
 #include "bstrlib.h"
@@ -31,6 +32,8 @@ int main()
     bstring s = bfromcstr("Saturday");
     int dist = editDistance(s, t);
     assert(dist == 3);
+    bdestroy(t);
+    bdestroy(s);
 
     // Sequences.
     seq seq1 = initSeq(10);
@@ -52,6 +55,8 @@ int main()
     assert(seq2.mlen == 6);
     assert(seq2.alen == 6);
     assert(seq2.val[0] == 'S');
+    bdestroy(bstr1);
+    freeSeq(&seq2);
 
     seq seq3out = initSeq(6);
     seq seq4out = initSeq(6);
@@ -68,12 +73,22 @@ int main()
     assert(seq4out.val[1] == ALIGN_GAP);
     assert(seq4out.val[2] == 'C');
 
-    int * mask3 = NULL;
-    int * mask4 = NULL;
+    highlightMask * mask3 = NULL;
+    highlightMask * mask4 = NULL;
     determineLineHighlighting(str3, str4, &mask3, &mask4);
     assert(mask3[0] == MASK_SAME);
     assert(mask3[5] == MASK_DIFFERENT);
 //    printf("%i %i %i %i %i %i\n", mask3[0], mask3[1], mask3[2], mask3[3], mask3[4], mask3[5]);
+
+    freeSeq(&seq3out);
+    freeSeq(&seq4out);
+    bdestroy(str3);
+    bdestroy(str4);
+    freeSeq(&seq3in);
+    freeSeq(&seq4in);
+    free(mask3);
+    free(mask4);
+
 
 
     /*

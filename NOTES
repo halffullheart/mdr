@@ -76,3 +76,19 @@ This one has:
 
 This is a sentence.                              |3) This is a scent.
 -----------XXXXXXX-------------------------------|XXX-----------XXXX---------------------------
+
+
+
+Replacing bstring lib
+---------------------
+
+### Used features
+- bread
+- bdestroy (free)
+- bcatcstr / bconcat
+- bsplit (results in a list)
+- bdelete
+- breplace
+- binsert
+- bfindreplace
+- bisstemeqblk (string starts with)

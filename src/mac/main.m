@@ -1,8 +1,8 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 #import <unistd.h>
-#import "../Reader.h"
-#import "../appIcon.png.h"
+#import "../mdr.h"
+#import "appIcon.png.h"
 
 @interface MDRApplicationDelegate : NSObject
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) sender;
@@ -25,7 +25,7 @@ int main (int argc, const char * argv[])
     {
         if (strcmp(argv[1], "--html") == 0)
         {
-            html = getHTML();
+            html = getHtmlFromStdIn();
             printf("%s", html);
             free(html);
         }
@@ -45,9 +45,10 @@ int main (int argc, const char * argv[])
     }
     else
     {
-        // Calling getHTML will grab text from stdin. We want to do this before
-        // we fork in case there isn't any so the user can enter it manually.
-        html = getHTML();
+        // Calling getHtmlFromStdIn() will grab text from stdin. We want to do
+        // this before we fork in case there isn't any so the user can enter
+        // it manually.
+        html = getHtmlFromStdIn();
     }
 
     pid_t pid = fork();
@@ -191,7 +192,7 @@ int main (int argc, const char * argv[])
         backing:NSBackingStoreBuffered defer:NO] autorelease];
 
     [window cascadeTopLeftFromPoint:NSMakePoint(200,200)];
-    id windowTitle = [@"mdr " stringByAppendingString:[NSString stringWithFormat:@"%d", [windowList count] + 1]];
+    id windowTitle = [@"mdr " stringByAppendingString:[NSString stringWithFormat:@"%ld", [windowList count] + 1]];
     [window setTitle:windowTitle];
     [window makeKeyAndOrderFront:nil];
 

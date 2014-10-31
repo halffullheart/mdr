@@ -1,8 +1,3 @@
-*.o
-*.exe
-*.css.h
-*.png.h
 .DS_Store
-mdr
-test
-mdr.dSYM
+build
+.vagrant/
