@@ -192,7 +192,7 @@ int main (int argc, const char * argv[])
         backing:NSBackingStoreBuffered defer:NO] autorelease];
 
     [window cascadeTopLeftFromPoint:NSMakePoint(200,200)];
-    id windowTitle = [@"mdr " stringByAppendingString:[NSString stringWithFormat:@"%d", [windowList count] + 1]];
+    id windowTitle = [@"mdr " stringByAppendingString:[NSString stringWithFormat:@"%ld", [windowList count] + 1]];
     [window setTitle:windowTitle];
     [window makeKeyAndOrderFront:nil];
 
