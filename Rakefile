@@ -91,7 +91,7 @@ if SYSTEM == :mac
     # Mac OS X Deployment Target
     '-mmacosx-version-min=10.8',
   ]
-  CFLAGS[:release] += ['-03']
+  CFLAGS[:release] += ['-O3']
   extra_headers   += ['appIcon.png.h']
 end
 
