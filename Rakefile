@@ -78,6 +78,12 @@ end
 
 if SYSTEM == :mac
   main_file = File.join(SRC_PATH, 'mac', 'main.m')
+
+  # Detect MacOSX sdk path
+  sdk_path = %x{xcodebuild -sdk -version}.each_line.find do |line|
+    line.start_with?('Path:') && (line.include? 'MacOSX')
+  end.split(' ').last.chomp
+  
   LFLAGS[:all] += [
     '-framework Cocoa',
     '-framework WebKit',
@@ -85,8 +91,8 @@ if SYSTEM == :mac
     #'-arch i386', # 32bit Intel
     #'-arch ppc', # 32bit PPC
 
-    # Base SDK, run `xcodebuild -sdk -version` to see possible options
-    '-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk',
+    # Base SDK
+    "-isysroot #{ sdk_path }",
 
     # Mac OS X Deployment Target
     '-mmacosx-version-min=10.8',
