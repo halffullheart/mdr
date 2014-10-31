@@ -27,39 +27,25 @@ a {
 }
 
 h1 {
-    font-size: 2em;
+    font-size: 2.5em;
 }
 
 h2 {
     margin-top: 1em;
+    font-size: 2em;
+}
+
+h3 {
+    margin-top: 1em;
     font-size: 1.5em;
 }
 
-h1, h2 {
+h1, h2, h3 {
     text-shadow: white 0 1px 0;
 }
 
 p {
     margin: 1em 0;
-}
-
-.download em {
-    font-weight: bold;
-    text-align: right:
-}
-
-.note {
-    background: #ffc8ab;
-    border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    color: #722903;
-    font-size: 0.8em;
-    padding: 6px 8px;
-}
-
-.note a {
-    color: red;
 }
 
 .example {
